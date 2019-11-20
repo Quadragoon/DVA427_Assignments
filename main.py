@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 dataFile = open("assignment1.txt", mode="r")
 
@@ -9,18 +10,18 @@ while line != "@data\n":
 print("Found data start, processing...")
 
 class Data:
-    attributes = [0]
+    attributes = []
     classification = 0
 
-    def __repr__(self):
-        return self.attributes[9]
+    def __str__(self):
+        return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
 
 allData = []
 
 for line in dataFile:
     dataPoint = Data()
-    dataPoint.attributes = line.split(",")
-    dataPoint.classification = dataPoint.attributes[-1]
+    dataPoint.attributes = list(map(float, line.split(",")))
+    dataPoint.classification = int(dataPoint.attributes[-1])
     del dataPoint.attributes[-1]
     allData.append(dataPoint)
 
@@ -36,7 +37,12 @@ validationSet = allData[trainingSetSize:trainingSetSize+validationSetSize]
 testingSetSize = math.floor(dataCount*0.1)
 testingSet = allData[trainingSetSize+validationSetSize:trainingSetSize+validationSetSize+testingSetSize]
 
+print("trainingSetSize: " + trainingSetSize.__str__())
+print("len(trainingSet): " + len(trainingSet).__str__())
+print("validationSetSize: " + validationSetSize.__str__())
+print("len(validationSet): " + len(validationSet).__str__())
+print("testingSetSize: " + testingSetSize.__str__())
+print("len(testingSet): " + len(testingSet).__str__())
 
-print("Training set size: " + trainingSetSize.__str__())
-print("Validation set size: " + validationSetSize.__str__())
-print("Testing set size: " + testingSetSize.__str__())
+for item in allData:
+    print(item)
