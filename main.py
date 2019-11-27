@@ -1,6 +1,8 @@
 import math
 import numpy as np
 
+np.random.seed()
+
 dataFile = open("assignment1.txt", mode="r")
 
 line = dataFile.readline()
