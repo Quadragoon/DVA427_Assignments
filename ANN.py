@@ -116,20 +116,33 @@ def CreateTestingLayers():
 #############################################################
 
 
-# given the targeted output, calculate the error of the output
-def calc_output_error(output_target):
+# calculate ANN output for the current inputs and weights
+def calc_output():
+    layers[0].outputs = layers[0].inputs
+    for layer_index in range(numHiddenLayers):
+        layers[layer_index + 1].inputs = layers[layer_index].outputs.dot(layers[layer_index].weights)
+        layers[layer_index + 1].outputs = sigmoid(layers[layer_index + 1].inputs)
+
     final_layer = layers[-1]
+    # the np.dot operation will return a 1x1 matrix, so use the [0, 0] index operator to get the number contained inside
     output_sum = (final_layer.outputs.dot(final_layer.weights))[0, 0]
     output_sigmoid = sigmoid(output_sum)
+    return output_sigmoid
 
-    final_output_error = (-(output_target - output_sigmoid) * output_sigmoid * (1 - output_sigmoid))
 
+# given the targeted output, calculate the error of the output
+def calc_output_error(output, target):
+    output_error = (-(target - output) * output * (1 - output))
+    return output_error
+
+
+def calc_errors_in_final_layer(output_error):
+    final_layer = layers[-1]
     for unit_index in range(hiddenLayerSize):
-        weighted_error = (final_output_error * final_layer.weights[unit_index, 0])
+        weighted_error = (output_error * final_layer.weights[unit_index, 0])
         final_layer.errors[0, unit_index] = (
                     (1 - final_layer.outputs[0, unit_index]) * final_layer.outputs[0, unit_index] * weighted_error)
-    update_output_weights(final_layer, final_output_error)
-    return final_output_error
+
 
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
     for unit_index in range(hidden_layer.outputs.__len__()):
@@ -141,10 +154,10 @@ def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
                 unit_index, downstream_unit_index])
         hidden_layer.errors[0, unit_index] = (
                     (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * error_sum)
-    update_layer_weights(hidden_layer, downstream_layer)
 
 
-def update_output_weights(final_layer, output_error):
+def calc_output_weight_deltas(output_error):
+    final_layer = layers[-1]
     for unit_index in range(hiddenLayerSize):
         # weight_delta = eta * delta_j * xji
         xji = final_layer.outputs[0, unit_index]  # * final_layer.weights[unit_index, 0]
@@ -163,21 +176,24 @@ def update_layer_weights(hidden_layer, downstream_layer):
     downstream_layer.weights -= downstream_layer.weight_deltas
 
 
-def ANN_run(target):
-    layers[0].outputs = layers[0].inputs
-    for i in range(numHiddenLayers):
-        layers[i+1].inputs = layers[i].outputs.dot(layers[i].weights)
-        layers[i+1].outputs = sigmoid(layers[i+1].inputs)
+def ANN_run(target, update_weights = False):
+    output = calc_output()
+    output_error = calc_output_error(output, target)
 
-    error = calc_output_error(target)
+    if update_weights:
+        calc_errors_in_final_layer(output_error)
+        calc_output_weight_deltas(output_error)
 
-    # iterate error calculation over hidden layers, starting at the end and moving backwards to the start
-    for layer_index in range(numHiddenLayers, 0, -1):
-        calc_errors_in_hidden_layer(layers[layer_index - 1], layers[layer_index])
+        # iterate error calculation over hidden layers, starting at the end and moving backwards to the start
+        for layer_index in range(numHiddenLayers, 0, -1):
+            hidden_layer = layers[layer_index - 1]
+            downstream_layer = layers[layer_index]
+            calc_errors_in_hidden_layer(hidden_layer, downstream_layer)
+            update_layer_weights(hidden_layer, downstream_layer)
 
-    layers[0].weights -= layers[0].weight_deltas
+        layers[0].weights -= layers[0].weight_deltas
 
-    return error
+    return output_error
 
 
 CreateLayers()
@@ -198,14 +214,16 @@ class Data:
     def __str__(self):
         return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
 
+
 all_data = []
 
 for line in data_file:
-    dataPoint = Data()
-    dataPoint.attributes = list(map(float, line.split(",")))
-    dataPoint.classification = int(dataPoint.attributes[-1])
-    del dataPoint.attributes[-1]
-    all_data.append(dataPoint)
+    data_point = Data()
+    data_point.attributes = list(map(float, line.split(",")))
+    data_point.classification = int(data_point.attributes[-1])
+    del data_point.attributes[-1]
+    if len(data_point.attributes) == 19:
+        all_data.append(data_point)
 
 data_count = len(all_data)
 print("Total number of data points: " + data_count.__str__())
@@ -223,9 +241,12 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-for i in range(5000):
+for i in range(500):
     error_sum = 0
     for data_point in training_set:
+        layers[0].inputs[0] = np.array(data_point.attributes)
+        ANN_run(data_point.classification, True)
+    for data_point in validation_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
         error_sum += ANN_run(data_point.classification)
     print(error_sum)
