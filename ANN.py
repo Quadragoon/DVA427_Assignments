@@ -5,9 +5,9 @@ import math
 ##########################################################
 np.random.seed()
 numInputParameters = 19  # >= 1
-numHiddenLayers = 2  # >= 0
-hiddenLayerSize = 10  # > 0
-eta = 0.5  # > 0
+numHiddenLayers = 1  # >= 0
+hiddenLayerSize = 19  # > 0
+eta = 0.1  # > 0
 
 
 def createWeightMatrix(first=False, last=False):
@@ -23,6 +23,10 @@ def createWeightMatrix(first=False, last=False):
 
 def sigmoid(value):
     return 1 / (1 + np.exp(-value))
+
+
+def anti_sigmoid(value):
+    return -np.log((1 / value) - 1)
 
 
 class Layer:
@@ -146,14 +150,14 @@ def calc_errors_in_final_layer(output_error):
 
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
     for unit_index in range(hidden_layer.outputs.__len__()):
-        error_sum = 0
+        downstream_error_sum = 0
         # calculate error terms according to this formula:
         # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
         for downstream_unit_index in range(downstream_layer.inputs.__len__()):
-            error_sum += (downstream_layer.errors[0, downstream_unit_index] * hidden_layer.weights[
+            downstream_error_sum += (downstream_layer.errors[0, downstream_unit_index] * hidden_layer.weights[
                 unit_index, downstream_unit_index])
         hidden_layer.errors[0, unit_index] = (
-                    (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * error_sum)
+                    (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * downstream_error_sum)
 
 
 def calc_output_weight_deltas(output_error):
@@ -176,7 +180,7 @@ def update_layer_weights(hidden_layer, downstream_layer):
     downstream_layer.weights -= downstream_layer.weight_deltas
 
 
-def ANN_run(target, update_weights = False):
+def ANN_run(target, update_weights=False, print_comparison=False):
     output = calc_output()
     output_error = calc_output_error(output, target)
 
@@ -190,8 +194,9 @@ def ANN_run(target, update_weights = False):
             downstream_layer = layers[layer_index]
             calc_errors_in_hidden_layer(hidden_layer, downstream_layer)
             update_layer_weights(hidden_layer, downstream_layer)
-
         layers[0].weights -= layers[0].weight_deltas
+    if print_comparison:
+        print("Target: " + target.__str__() + "       Output: " + output.__str__())
 
     return output_error
 
@@ -216,6 +221,8 @@ class Data:
 
 
 all_data = []
+attributes_max = list()
+attributes_min = list()
 
 for line in data_file:
     data_point = Data()
@@ -223,7 +230,27 @@ for line in data_file:
     data_point.classification = int(data_point.attributes[-1])
     del data_point.attributes[-1]
     if len(data_point.attributes) == 19:
+        if len(attributes_max) == 0:
+            for attribute in data_point.attributes:
+                attributes_max.append(attribute)
+                attributes_min.append(attribute)
         all_data.append(data_point)
+    else:
+        continue
+    for attribute_index in range(len(data_point.attributes)):
+        minimum = min(attributes_min[attribute_index], data_point.attributes[attribute_index])
+        attributes_min[attribute_index] = minimum
+        maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
+        attributes_max[attribute_index] = maximum
+
+for data_point in all_data:
+    for attribute_index in range(len(data_point.attributes)):
+        attribute_max = attributes_max[attribute_index]
+        attribute_min = attributes_min[attribute_index]
+        if attribute_max == attribute_min:
+            continue
+        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+
 
 data_count = len(all_data)
 print("Total number of data points: " + data_count.__str__())
@@ -245,11 +272,11 @@ for i in range(500):
     error_sum = 0
     for data_point in training_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
-        ANN_run(data_point.classification, True)
+        ANN_run(data_point.classification, update_weights=True)
     for data_point in validation_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
-        error_sum += ANN_run(data_point.classification)
-    print(error_sum)
+        error_sum += ANN_run(data_point.classification, print_comparison=False)
+    # print(error_sum)
 
 # For every training example, until overall error becomes sufficiently low, do:
 #   1.  Compute output from input (forwards)
