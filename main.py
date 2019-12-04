@@ -72,10 +72,9 @@ def ANN_exit():
 
 
 def user_confirmation():
-    usr_input = None
-    while usr_input not in {"y", "n"}:
-        usr_input = input("[Y/N]\n ")[0].lower()  # get first character and make it lowercase
-    if usr_input == "y":
+    usr_input = input("[y/N]\n ").lower()  # get first character and make it lowercase
+
+    if usr_input in {"y", "yes"}:
         return 1
     else:
         return 0
