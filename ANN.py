@@ -3,10 +3,15 @@ import numpy as np
 # INITIALIZATION #########################################
 ##########################################################
 np.random.seed()
+numInputParameters = 18  # >= 1
+numHiddenLayers = 1  # >= 0
+hiddenLayerSize = 5  # > 0
 
 
 def createWeightMatrix(first=False, last=False):
-    if first:
+    if first & last:
+        return matrix_create_random(numInputParameters, 1)
+    elif first:
         return matrix_create_random(numInputParameters, hiddenLayerSize)
     elif last:
         return matrix_create_random(hiddenLayerSize, 1)
@@ -14,11 +19,16 @@ def createWeightMatrix(first=False, last=False):
         return matrix_create_random(hiddenLayerSize, hiddenLayerSize)
 
 
+def sigmoid(value):
+    return 1 / (1 + np.exp(-value))
+
+
 class Layer:
     def __init__(self, size, first=False, last=False):
+        self.weights = createWeightMatrix(first, last)
         self.inputs = np.zeros((1, size))
         self.errors = np.zeros((1, size))
-        self.weights = createWeightMatrix(first, last)
+        self.outputs = np.zeros((1, size))
 
 
 def matrix_create_random(rows, col):
@@ -28,24 +38,18 @@ def matrix_create_random(rows, col):
 def matrix_print(matrix):
     print(matrix,"\n")
     return
-#    for row in matrix:
-#        print("[  ", end="")
-#        for elem in row:
-#            print(elem, end='  ')
-#        print("]")
-#    print("")
 
 
 def printMatrices():
     print('--- printing matrices --------')
     print('hidden layers')
     for layer in layers:
-        if ((layer != layers[0]) & (layer != layers[layers.__len__()-1])):
+        if ((layer != layers[0]) & (layer != layers[-1])):
             matrix_print(layer.weights)
     print('input')
     matrix_print(layers[0].inputs)
-    print('output')
-    matrix_print(layers[-1].outputs)
+    # print('output')
+    # matrix_print(layers[-1].outputs)
     # print('error output')
     # matrix_print(errorOutput)
     # print('error hidden layers')
@@ -53,106 +57,75 @@ def printMatrices():
     #     matrix_print(error)
     print('------------------')
 
+
 layers = list()
-numInputParameters = 18  # >= 1
-numHiddenLayers = 5  # >= 0
-hiddenLayerSize = 5  # > 0
+
 
 def CreateLayers():
-    global hiddenLayerSize
-    inputLayer = Layer(numInputParameters, first=True)
-    layers.append(inputLayer)
-    for x in range(numHiddenLayers):
-        layers.append(Layer(hiddenLayerSize))
     if numHiddenLayers == 0:
-        hiddenLayerSize = numInputParameters
-    layers.append(Layer(hiddenLayerSize, last=True))
+        layers.append(Layer(numInputParameters, first=True, last=True))
+    else:
+        layers.append(Layer(numInputParameters, first=True))
 
-# error terms for output
-errorOutput = np.zeros((numInputParameters, 1))
-
-# error terms for hidden layers (2d list: error term j of hidden layer unit j has size rows(layer weight j))
-hiddenLayerErrors = list()
-for index in range(numHiddenLayers - 1):
-    hiddenLayerErrors.append(np.zeros((numInputParameters, 1)))
-
-# error term for last hidden layer (unnecessary(?))
-# errorHidden.append(np.zeros((1,1)))
+    global hiddenLayerSize
+    for x in range(numHiddenLayers):
+        if x < numHiddenLayers - 1:
+            layers.append(Layer(hiddenLayerSize))
+        else:
+            layers.append(Layer(hiddenLayerSize, last=True))
 
 #############################################################
 #############################################################
 #############################################################
 
-errorList = list()
-errorList.append(errorOutput)
-errorList.append(hiddenLayerErrors)
 
-
-def ANN_run(inputs, weights):
-    output = np.zeros((1,1))
-    for layer_weights in weights:
-        output = inputs.dot(layer_weights)
-        print(output, "\n")
-    return output
-
-
-def ANN_run_2():
-    for i in range(layers.__len__()):
-        #layers[i].outputs = layers[i].inputs.dot(layers[i].weights)
-        if i < layers.__len__() - 1:
-            #layers[i+1].inputs = layers[i].outputs
-            layers[i+1].inputs = layers[i].inputs.dot(layers[i].weights)
-
-    calc_final_output_error(1)
-    for layer_index in range(numHiddenLayers - 1):
-        calc_errors_in_hidden_layer(layers[- layer_index - 2], layers[ - layer_index - 1])
-        print(layers[-layer_index - 2].errors)
-
-
-def error_for_nodes_in_this_layer(layer_weights, errors_previous_layer, size, layer_outputs):
-    node_errors = np.zeros((size, 1))
-    for this_node in range(size):
-        calculated_error = 0
-
-        for node_downstream in range(size):
-            calculated_error += errors_previous_layer[node_downstream]*layer_weights[this_node][node_downstream]
-
-        calculated_error *= (1-layer_outputs[this_node])
-
-        node_errors[this_node] = calculated_error
-    return node_errors
-
-
-def calc_final_output_error(output_target):
-    # cycle through all nodes in current layer
-    # calculate error in this node
-    output_sum = np.sum(layers[-1].inputs.dot(layers[-1].weights))
-    print(output_sum)
-    final_output_error = ((output_target - output_sum) * output_sum * (1 - output_sum))
+# given the targeted output, calculate the error of the output
+def calc_output_error(output_target):
+    final_layer = layers[-1]
+    output_sum = np.sum(final_layer.outputs.dot(final_layer.weights))
+    output_sigmoid = sigmoid(output_sum)
+    final_output_error = ((output_target - output_sigmoid) * output_sigmoid * (1 - output_sigmoid))
 
     for unit_index in range(hiddenLayerSize):
-        weightedError = (final_output_error * layers[-1].weights[unit_index, 0])
-        layers[-1].errors[0, unit_index] = (
-                    (1 - layers[-1].inputs[0, unit_index]) * layers[-1].inputs[0, unit_index] * weightedError)
+        weightedError = (final_output_error * final_layer.weights[unit_index, 0])
+        final_layer.errors[0, unit_index] = (
+                    (1 - final_layer.outputs[0, unit_index]) * final_layer.outputs[0, unit_index] * weightedError)
+
+    print(final_layer.errors)
 
 
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
     for unit_index in range(hiddenLayerSize):
         errorSum = 0
-        for downstream_unit_index in range(downstream_layer.inputs.__len__()):
+
+        # calculate error terms according to this formula:
+        # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
+        for downstream_unit_index in range(downstream_layer.outputs.__len__()):
             errorSum += (downstream_layer.errors[0, downstream_unit_index] * hidden_layer.weights[unit_index, downstream_unit_index])
-        hidden_layer.errors[0, unit_index] = ((1 - hidden_layer.inputs[0, unit_index]) * hidden_layer.inputs[0, unit_index] * errorSum)
+        hidden_layer.errors[0, unit_index] = ((1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * errorSum)
 
 
-# result = ANN_run(X, weightMatrices)
+def ANN_run():
+    layers[0].outputs = layers[0].inputs
+    for i in range(numHiddenLayers):
+        layers[i+1].inputs = layers[i].outputs.dot(layers[i].weights)
+        layers[i+1].outputs = sigmoid(layers[i+1].inputs)
+
+    print("Calculating error in final layer, index " + str(layers.__len__() - 1))
+    calc_output_error(1)
+
+    # iterate error calculation over hidden layers, starting at the end and moving backwards to the start
+    for layer_index in range(numHiddenLayers, 0, -1):
+        print("Calculating error in layer " + str(layer_index - 1) + " from layer " + str(layer_index))
+        calc_errors_in_hidden_layer(layers[layer_index - 1], layers[layer_index])
+
+
 CreateLayers()
 
 layers[0].inputs = matrix_create_random(1, numInputParameters)
-ANN_run_2()
+ANN_run()
 
 # printMatrices()
-
-# errorOutput = error_in_output(result, target)
 
 
 # For every training example, until overall error becomes sufficiently low, do:
