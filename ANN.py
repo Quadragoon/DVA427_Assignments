@@ -229,6 +229,10 @@ for line in data_file:
     data_point.attributes = list(map(float, line.split(",")))
     data_point.classification = int(data_point.attributes[-1])
     del data_point.attributes[-1]
+
+    for index in range(8, 16):
+        data_point.attributes[index] /= data_point.attributes[17]
+
     if len(data_point.attributes) == 19:
         if len(attributes_max) == 0:
             for attribute in data_point.attributes:
