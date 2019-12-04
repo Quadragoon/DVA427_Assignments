@@ -1,50 +1,141 @@
-import math
-import numpy as np
 
-np.random.seed()
+str_main_header = "\n\n\n\n -- ANN Lab1 --\n---------------------"
 
-dataFile = open("assignment1.txt", mode="r")
 
-line = dataFile.readline()
-while line != "@data\n":
-    line = dataFile.readline()
+class ANN:
+    filename = str
+    layers = list()
+    results = list()
 
-print("Found data start, processing...")
 
-class Data:
-    attributes = []
-    classification = 0
+training_set = list()
+verification_set = list()
+test_set = list()
 
-    def __str__(self):
-        return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
+ann = ANN()
 
-allData = []
 
-for line in dataFile:
-    dataPoint = Data()
-    dataPoint.attributes = list(map(float, line.split(",")))
-    dataPoint.classification = int(dataPoint.attributes[-1])
-    del dataPoint.attributes[-1]
-    allData.append(dataPoint)
+def ANN_run():
+    # after running
+    print("Do you want to save the results?")
+    if user_confirmation():
+        # save results
+        return 1
+    else:
+        # discard results
+        return 1
 
-dataCount = len(allData)
-print("Total number of data points: " + dataCount.__str__())
 
-trainingSetSize = math.ceil(dataCount*0.75)
-trainingSet = allData[0:trainingSetSize]
+def ANN_train():
+    # train ANN
+    # save results
+    return 1
 
-validationSetSize = math.floor(dataCount*0.15)
-validationSet = allData[trainingSetSize:trainingSetSize+validationSetSize]
 
-testingSetSize = math.floor(dataCount*0.1)
-testingSet = allData[trainingSetSize+validationSetSize:trainingSetSize+validationSetSize+testingSetSize]
+def ANN_save():
+    # print ANN files already saved
+    # input file name to save ANN in
+    return 1
 
-print("trainingSetSize: " + trainingSetSize.__str__())
-print("len(trainingSet): " + len(trainingSet).__str__())
-print("validationSetSize: " + validationSetSize.__str__())
-print("len(validationSet): " + len(validationSet).__str__())
-print("testingSetSize: " + testingSetSize.__str__())
-print("len(testingSet): " + len(testingSet).__str__())
 
-for item in allData:
-    print(item)
+def ANN_new():
+    # randomize weights
+    # clear results
+    return 1
+
+
+def ANN_load():
+    # if files exist: choose a file
+    # check that ANN could be loaded
+    return 1
+
+
+def ANN_results():
+    # if results exists: print them
+    if False:
+        # print results
+        return 1
+    else:
+        print("No results were found\n\npress ENTER to continue")
+        input()
+
+        main_menu()
+
+
+def ANN_exit():
+    print("Are you sure you want to exit?")
+    if user_confirmation():
+        print("exiting...")
+        return -1
+    else:
+        return 0
+
+
+def user_confirmation():
+    usr_input = None
+    while usr_input not in {"y", "n"}:
+        usr_input = input("[Y/N]\n ")[0].lower()  # get first character and make it lowercase
+    if usr_input == "y":
+        return 1
+    else:
+        return 0
+
+
+def invalid_func():
+    print("Switcher: Invalid function")
+    return -1
+
+
+switcher_options = {
+    "train": ANN_train,
+    "run": ANN_run,
+    "results": ANN_results,
+    "save": ANN_save,
+    "load": ANN_load,
+    "new": ANN_new,
+    "exit": ANN_exit
+}
+
+
+def switcher(available_choices):
+    print("Choose one of the following:", sep="\n")
+    for string in available_choices:
+        print("* " + string[0].upper() + string[1:])
+
+    usr_input = input("Enter your choice:\n   ").lower()
+    while usr_input not in available_choices:
+        usr_input = input("Try again:\n   ").lower()
+
+    func = switcher_options.get(usr_input, lambda: "invalid_func")
+    return func()
+
+
+def main_menu():
+    retval = None
+
+    available_choices = {"new", "load", "exit"}
+    while retval != 1:
+        print(str_main_header)
+        retval = switcher(available_choices)
+        if retval == -1:
+            return -1
+    # [print ANN file name]
+
+    while retval != -1:
+        available_choices = {
+            "train",
+            "run",
+            "results",
+            "save",
+            "load",
+            "new",
+            "exit"
+        }
+        print(str_main_header)
+        retval = switcher(available_choices)
+
+    return
+
+
+main_menu()
+
