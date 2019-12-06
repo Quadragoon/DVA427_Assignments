@@ -6,8 +6,8 @@ import math
 np.random.seed()
 numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
-hiddenLayerSize = 19  # > 0
-eta = 0.3  # > 0
+hiddenLayerSize = 15  # > 0
+eta = 0.5  # > 0
 
 output_ANN = 0.0
 
@@ -32,13 +32,14 @@ def anti_sigmoid(value):
 
 class Layer:
     def __init__(self, size, first=False, last=False):
+        self.size = size
         self.weights = createWeightMatrix(first, last)
         self.inputs = np.zeros((1, size))
         self.errors = np.zeros((1, size))
         self.outputs = np.zeros((1, size))
 
         # create matrix of some size derived from the createWeightMatrix function (which takes into account whether
-        # this is the first layer, last layer, or somewhere in between
+        # this is the first layer, last layer, or somewhere in between)
         self.weight_deltas = createWeightMatrix(first, last)
         # set all matrix elements to zero by multiplying them (by zero)
         self.weight_deltas *= 0
@@ -143,18 +144,27 @@ def calc_output_error(output, target):
 
 def calc_errors_in_final_layer(output_error):
     final_layer = layers[-1]
-    for unit_index in range(hiddenLayerSize):
-        weighted_error = (output_error * final_layer.weights[unit_index, 0])
-        final_layer.errors[0, unit_index] = (
-                    (1 - final_layer.outputs[0, unit_index]) * final_layer.outputs[0, unit_index] * weighted_error)
+    weighted_error_matrix = output_error * final_layer.weights
+    for unit_index in range(final_layer.size):
+        unit_output = final_layer.outputs[0, unit_index]
+        final_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * weighted_error_matrix[unit_index, 0])
 
 
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
-    for unit_index in range(hidden_layer.outputs.__len__()):
+    for unit_index in range(hidden_layer.size):
+        # calculate error terms according to this formula:
+        # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
+        downstream_error_sum = downstream_layer.errors.dot(hidden_layer.weights[unit_index].transpose())[0]
+        hidden_layer.errors[0, unit_index] = (
+                    (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * downstream_error_sum)
+
+
+def calc_errors_in_hidden_layer_old(hidden_layer, downstream_layer):
+    for unit_index in range(hidden_layer.size):
         downstream_error_sum = 0
         # calculate error terms according to this formula:
         # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
-        for downstream_unit_index in range(downstream_layer.inputs.__len__()):
+        for downstream_unit_index in range(downstream_layer.size):
             downstream_error_sum += (downstream_layer.errors[0, downstream_unit_index] * hidden_layer.weights[
                 unit_index, downstream_unit_index])
         hidden_layer.errors[0, unit_index] = (
@@ -171,14 +181,21 @@ def calc_output_weight_deltas(output_error):
 
 
 def update_layer_weights(hidden_layer, downstream_layer):
-    for unit_index in range(hidden_layer.outputs.__len__()):
-        for downstream_unit_index in range(downstream_layer.inputs.__len__()):
-            # weight_delta = eta * delta_j * xji
-            xji = hidden_layer.outputs[0, unit_index]  # * hidden_layer.weights[unit_index, downstream_unit_index]
-            weight_delta = eta * downstream_layer.errors[0, downstream_unit_index] * xji
-            hidden_layer.weight_deltas[unit_index, downstream_unit_index] = weight_delta
+    hidden_layer.weight_deltas = np.transpose(hidden_layer.outputs).dot(downstream_layer.errors)
+    hidden_layer.weight_deltas *= eta
 
     downstream_layer.weights -= downstream_layer.weight_deltas
+
+
+def update_layer_weights_old(hidden_layer, downstream_layer):
+    for unit_index in range(hidden_layer.size):
+        xji = hidden_layer.outputs[0, unit_index]  # * hidden_layer.weights[unit_index, downstream_unit_index]
+        for downstream_unit_index in range(downstream_layer.size):
+            # weight_delta = eta * delta_j * xji
+            weight_delta = eta * downstream_layer.errors[0, downstream_unit_index] * xji
+            # hidden_layer.weight_deltas[unit_index, downstream_unit_index] = weight_delta
+
+    # downstream_layer.weights -= downstream_layer.weight_deltas
 
 
 def ANN_run(target, update_weights=False, print_comparison=False):
@@ -201,7 +218,7 @@ def ANN_run(target, update_weights=False, print_comparison=False):
             update_layer_weights(hidden_layer, downstream_layer)
         layers[0].weights -= layers[0].weight_deltas
     if print_comparison:
-        print("Target: " + target.__str__() + "       Output: " + round(output).__str__())
+        print("Target: " + target.__str__() + "       Rounded output: " + int(round(output).__str__()))
 
     return output_error
 
@@ -279,15 +296,15 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 500
+noOfRuns = 50000
 bestAccuracy = 0
 
 for i in range(noOfRuns):
     correct_guesses = 0
     correct_positives = 0
     correct_negatives = 0
-
     error_sum = 0
+
     for data_point in training_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
         ANN_run(data_point.classification, update_weights=True)
@@ -301,13 +318,13 @@ for i in range(noOfRuns):
             correct_guesses += 1
             correct_negatives += 1
 
-    accuracy = 100*correct_guesses/noOfRuns
+    accuracy = 100*correct_guesses/validation_set_size
     if accuracy > bestAccuracy:
         bestAccuracy = accuracy
 
     print("i:  ", i, " ", sep="", end="")
-    # print(error_sum)
-    print("Accuracy: ", accuracy, " [", correct_guesses, "/", noOfRuns, "] ", sep="", end="")
+    print(error_sum)
+    print("Accuracy: ", accuracy, " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
     print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
     print("")
 
