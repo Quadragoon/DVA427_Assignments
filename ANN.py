@@ -7,7 +7,7 @@ np.random.seed()
 numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 19  # > 0
-eta = 0.1  # > 0
+eta = 0.3  # > 0
 
 
 def createWeightMatrix(first=False, last=False):
@@ -196,7 +196,7 @@ def ANN_run(target, update_weights=False, print_comparison=False):
             update_layer_weights(hidden_layer, downstream_layer)
         layers[0].weights -= layers[0].weight_deltas
     if print_comparison:
-        print("Target: " + target.__str__() + "       Output: " + output.__str__())
+        print("Target: " + target.__str__() + "       Output: " + round(output).__str__())
 
     return output_error
 
@@ -241,19 +241,6 @@ for line in data_file:
         all_data.append(data_point)
     else:
         continue
-    for attribute_index in range(len(data_point.attributes)):
-        minimum = min(attributes_min[attribute_index], data_point.attributes[attribute_index])
-        attributes_min[attribute_index] = minimum
-        maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
-        attributes_max[attribute_index] = maximum
-
-for data_point in all_data:
-    for attribute_index in range(len(data_point.attributes)):
-        attribute_max = attributes_max[attribute_index]
-        attribute_min = attributes_min[attribute_index]
-        if attribute_max == attribute_min:
-            continue
-        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
 
 
 data_count = len(all_data)
@@ -268,6 +255,21 @@ validation_set = all_data[training_set_size:training_set_size + validation_set_s
 testing_set_size = math.floor(data_count * 0.1)
 testing_set = all_data[training_set_size + validation_set_size:training_set_size + validation_set_size + testing_set_size]
 
+for data_point in training_set:
+    for attribute_index in range(len(data_point.attributes)):
+        minimum = min(attributes_min[attribute_index], data_point.attributes[attribute_index])
+        attributes_min[attribute_index] = minimum
+        maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
+        attributes_max[attribute_index] = maximum
+
+for data_point in all_data:
+    for attribute_index in range(len(data_point.attributes)):
+        attribute_max = attributes_max[attribute_index]
+        attribute_min = attributes_min[attribute_index]
+        if attribute_max == attribute_min:
+            continue
+        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+
 print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
@@ -279,8 +281,8 @@ for i in range(500):
         ANN_run(data_point.classification, update_weights=True)
     for data_point in validation_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
-        error_sum += ANN_run(data_point.classification, print_comparison=False)
-    # print(error_sum)
+        error_sum += abs(ANN_run(data_point.classification, print_comparison=False))
+    print(error_sum)
 
 # For every training example, until overall error becomes sufficiently low, do:
 #   1.  Compute output from input (forwards)
