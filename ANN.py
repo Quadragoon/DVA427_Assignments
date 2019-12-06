@@ -7,7 +7,7 @@ np.random.seed()
 numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 15  # > 0
-eta = 0.1  # > 0
+eta = 0.5  # > 0
 
 output_ANN = 0.0
 
@@ -214,11 +214,11 @@ def ANN_run(target, update_weights=False, print_comparison=False):
         for layer_index in range(numHiddenLayers, 0, -1):
             hidden_layer = layers[layer_index - 1]
             downstream_layer = layers[layer_index]
-            calc_errors_in_hidden_layer_old(hidden_layer, downstream_layer)
-            update_layer_weights_old(hidden_layer, downstream_layer)
+            calc_errors_in_hidden_layer(hidden_layer, downstream_layer)
+            update_layer_weights(hidden_layer, downstream_layer)
         layers[0].weights -= layers[0].weight_deltas
     if print_comparison:
-        print("Target: " + target.__str__() + "       Rounded output: " + int(round(output).__str__()))
+        print("Target: " + target.__str__() + "       Rounded output: " + int(round(output)).__str__())
 
     return output_error
 
@@ -296,9 +296,8 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 500
+noOfRuns = 1
 bestAccuracy = 0
-accuracy = list()
 
 for i in range(noOfRuns):
     correct_guesses = 0
@@ -315,24 +314,20 @@ for i in range(noOfRuns):
         if (output_ANN >= 0.5) & (data_point.classification == 1):
             correct_guesses += 1
             correct_positives += 1
-        elif data_point.classification == 0:
+        elif (output_ANN < 0.5) & (data_point.classification == 0):
             correct_guesses += 1
             correct_negatives += 1
 
-    accuracy.append(100*correct_guesses/validation_set_size)
-    if accuracy[i] > bestAccuracy:
-        bestAccuracy = accuracy[i]
+    accuracy = 100*correct_guesses/validation_set_size
+    if accuracy > bestAccuracy:
+        bestAccuracy = accuracy
 
-    print(error_sum)
     print("i:  ", i, " ", sep="", end="")
-    print("Accuracy: ", round(accuracy[i], 2), " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
+    # print(error_sum)
+    print("Accuracy: ", accuracy, " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
     print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
     print("")
 
-print("---------------------------------------------"
-      "---------------------------------------------"
-      "---------------------------------------------")
-print(accuracy)
 print("\n Best accuracy: ", bestAccuracy, sep="")
 
 # For every training example, until overall error becomes sufficiently low, do:
