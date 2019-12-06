@@ -218,7 +218,7 @@ def ANN_run(target, update_weights=False, print_comparison=False):
             update_layer_weights(hidden_layer, downstream_layer)
         layers[0].weights -= layers[0].weight_deltas
     if print_comparison:
-        print("Target: " + target.__str__() + "       Rounded output: " + int(round(output).__str__()))
+        print("Target: " + target.__str__() + "       Rounded output: " + int(round(output)).__str__())
 
     return output_error
 
@@ -296,7 +296,7 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 50000
+noOfRuns = 1
 bestAccuracy = 0
 
 for i in range(noOfRuns):
@@ -314,7 +314,7 @@ for i in range(noOfRuns):
         if (output_ANN >= 0.5) & (data_point.classification == 1):
             correct_guesses += 1
             correct_positives += 1
-        elif data_point.classification == 0:
+        elif (output_ANN < 0.5) & (data_point.classification == 0):
             correct_guesses += 1
             correct_negatives += 1
 
@@ -323,7 +323,7 @@ for i in range(noOfRuns):
         bestAccuracy = accuracy
 
     print("i:  ", i, " ", sep="", end="")
-    print(error_sum)
+    # print(error_sum)
     print("Accuracy: ", accuracy, " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
     print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
     print("")
