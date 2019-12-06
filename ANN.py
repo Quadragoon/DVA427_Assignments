@@ -9,6 +9,7 @@ numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 19  # > 0
 eta = 0.3  # > 0
 
+output_ANN = 0.0
 
 def createWeightMatrix(first=False, last=False):
     if first & last:
@@ -181,7 +182,11 @@ def update_layer_weights(hidden_layer, downstream_layer):
 
 
 def ANN_run(target, update_weights=False, print_comparison=False):
+    global output_ANN
     output = calc_output()
+
+    output_ANN = output
+
     output_error = calc_output_error(output, target)
 
     if update_weights:
@@ -274,7 +279,14 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-for i in range(500):
+noOfRuns = 500
+bestAccuracy = 0
+
+for i in range(noOfRuns):
+    correct_guesses = 0
+    correct_positives = 0
+    correct_negatives = 0
+
     error_sum = 0
     for data_point in training_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
@@ -282,7 +294,24 @@ for i in range(500):
     for data_point in validation_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
         error_sum += abs(ANN_run(data_point.classification, print_comparison=False))
-    print(error_sum)
+        if (output_ANN >= 0.5) & (data_point.classification == 1):
+            correct_guesses += 1
+            correct_positives += 1
+        elif data_point.classification == 0:
+            correct_guesses += 1
+            correct_negatives += 1
+
+    accuracy = 100*correct_guesses/noOfRuns
+    if accuracy > bestAccuracy:
+        bestAccuracy = accuracy
+
+    print("i:  ", i, " ", sep="", end="")
+    # print(error_sum)
+    print("Accuracy: ", accuracy, " [", correct_guesses, "/", noOfRuns, "] ", sep="", end="")
+    print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
+    print("")
+
+print("\n Best accuracy: ", bestAccuracy, sep="")
 
 # For every training example, until overall error becomes sufficiently low, do:
 #   1.  Compute output from input (forwards)
