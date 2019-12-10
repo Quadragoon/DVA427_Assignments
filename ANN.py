@@ -2,7 +2,7 @@ import numpy as np
 import math
 import time
 import random
-import lab_library
+import lab_library as lablib
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
@@ -259,48 +259,50 @@ def ANN_run(target, update_weights=False, print_comparison=False):
 
 CreateLayers()
 
-data_file = open("assignment1.txt", mode="r")
+all_data = lablib.import_data_from_file("assignment1.txt", 19)
 
-line = data_file.readline()
-while line != "@data\n":
-    line = data_file.readline()
-
-print("Found data start, processing...")
-
-
-class Data:
-    attributes = []
-    classification = 0
-
-    def __str__(self):
-        return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
-
-
-all_data = []
-attributes_max = list()
-attributes_min = list()
-
-for line in data_file:
-    data_point = Data()
-    data_point.attributes = list(map(float, line.split(",")))
-    data_point.classification = int(data_point.attributes[-1])
-    del data_point.attributes[-1]
-
-    for index in range(8, 16):
-        data_point.attributes[index] /= data_point.attributes[17]
-
-    if len(data_point.attributes) == 19:
-        if len(attributes_max) == 0:
-            for attribute in data_point.attributes:
-                attributes_max.append(attribute)
-                attributes_min.append(attribute)
-        all_data.append(data_point)
-    else:
-        continue
-
-
-data_count = len(all_data)
-print("Total number of data points: " + data_count.__str__())
+# data_file = open("assignment1.txt", mode="r")
+#
+# line = data_file.readline()
+# while line != "@data\n":
+#     line = data_file.readline()
+#
+# print("Found data start, processing...")
+#
+#
+# class Data:
+#     attributes = []
+#     classification = 0
+#
+#     def __str__(self):
+#         return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
+#
+#
+# all_data = []
+# attributes_max = list()
+# attributes_min = list()
+#
+# for line in data_file:
+#     data_point = Data()
+#     data_point.attributes = list(map(float, line.split(",")))
+#     data_point.classification = int(data_point.attributes[-1])
+#     del data_point.attributes[-1]
+#
+#     for index in range(8, 16):
+#         data_point.attributes[index] /= data_point.attributes[17]
+#
+#     if len(data_point.attributes) == 19:
+#         if len(attributes_max) == 0:
+#             for attribute in data_point.attributes:
+#                 attributes_max.append(attribute)
+#                 attributes_min.append(attribute)
+#         all_data.append(data_point)
+#     else:
+#         continue
+#
+#
+# data_count = len(all_data)
+# print("Total number of data points: " + data_count.__str__())
 
 training_set_size = math.ceil(data_count * 0.75)
 # training_set = all_data[0:training_set_size]
