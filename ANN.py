@@ -1,5 +1,7 @@
 import numpy as np
 import math
+import time
+import random
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
@@ -7,9 +9,12 @@ np.random.seed()
 numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 15  # > 0
-eta = 0.5  # > 0
+eta = 0.3  # > 0
 
 output_ANN = 0.0
+
+start_time = time.time()
+
 
 def createWeightMatrix(first=False, last=False):
     if first & last:
@@ -22,12 +27,12 @@ def createWeightMatrix(first=False, last=False):
         return matrix_create_random(hiddenLayerSize, hiddenLayerSize)
 
 
-def sigmoid(value):
+def matrix_sigmoid(value):
     return 1 / (1 + np.exp(-value))
 
 
-def anti_sigmoid(value):
-    return -np.log((1 / value) - 1)
+def scalar_sigmoid(value):
+    return 1 / (1 + math.exp(-value))
 
 
 class Layer:
@@ -127,12 +132,12 @@ def calc_output():
     layers[0].outputs = layers[0].inputs
     for layer_index in range(numHiddenLayers):
         layers[layer_index + 1].inputs = layers[layer_index].outputs.dot(layers[layer_index].weights)
-        layers[layer_index + 1].outputs = sigmoid(layers[layer_index + 1].inputs)
+        layers[layer_index + 1].outputs = matrix_sigmoid(layers[layer_index + 1].inputs)
 
     final_layer = layers[-1]
     # the np.dot operation will return a 1x1 matrix, so use the [0, 0] index operator to get the number contained inside
     output_sum = (final_layer.outputs.dot(final_layer.weights))[0, 0]
-    output_sigmoid = sigmoid(output_sum)
+    output_sigmoid = scalar_sigmoid(output_sum)
     return output_sigmoid
 
 
@@ -150,13 +155,33 @@ def calc_errors_in_final_layer(output_error):
         final_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * weighted_error_matrix[unit_index, 0])
 
 
+def calc_errors_in_final_layer_mat_mult(output_error):
+    final_layer = layers[-1]
+    weighted_error_matrix = np.diag(output_error * np.transpose(final_layer.weights)[0])
+    inverted_outputs = np.diag((-final_layer.outputs + 1)[0])
+    final_layer.errors = final_layer.outputs.dot(inverted_outputs)
+    final_layer.errors = final_layer.errors.dot(weighted_error_matrix)
+
+
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
     for unit_index in range(hidden_layer.size):
+        unit_output = hidden_layer.outputs[0, unit_index]
         # calculate error terms according to this formula:
         # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
         downstream_error_sum = downstream_layer.errors.dot(hidden_layer.weights[unit_index].transpose())[0]
-        hidden_layer.errors[0, unit_index] = (
-                    (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * downstream_error_sum)
+        hidden_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * downstream_error_sum)
+
+
+def calc_errors_in_hidden_layer_mat_mult(hidden_layer, downstream_layer):
+    downstream_error_sums = downstream_layer.errors.dot(hidden_layer.weights.transpose())
+    inverted_outputs = np.diag((-hidden_layer.outputs + 1)[0])
+    hidden_layer.errors = hidden_layer.outputs.dot(inverted_outputs).dot(np.diag(downstream_error_sums[0]))
+    #for unit_index in range(hidden_layer.size):
+    #    unit_output = hidden_layer.outputs[0, unit_index]
+    #    # calculate error terms according to this formula:
+    #    # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
+    #    downstream_error_sum = downstream_layer.errors.dot(hidden_layer.weights[unit_index].transpose())[0]
+    #    hidden_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * downstream_error_sum)
 
 
 def calc_errors_in_hidden_layer_old(hidden_layer, downstream_layer):
@@ -172,6 +197,13 @@ def calc_errors_in_hidden_layer_old(hidden_layer, downstream_layer):
 
 
 def calc_output_weight_deltas(output_error):
+    final_layer = layers[-1]
+    # weight_delta = eta * delta_j * xji
+    final_layer.weight_deltas = np.transpose(final_layer.outputs) * output_error
+    final_layer.weight_deltas *= eta
+
+
+def calc_output_weight_deltas_old(output_error):
     final_layer = layers[-1]
     for unit_index in range(hiddenLayerSize):
         # weight_delta = eta * delta_j * xji
@@ -193,9 +225,9 @@ def update_layer_weights_old(hidden_layer, downstream_layer):
         for downstream_unit_index in range(downstream_layer.size):
             # weight_delta = eta * delta_j * xji
             weight_delta = eta * downstream_layer.errors[0, downstream_unit_index] * xji
-            # hidden_layer.weight_deltas[unit_index, downstream_unit_index] = weight_delta
+            hidden_layer.weight_deltas[unit_index, downstream_unit_index] = weight_delta
 
-    # downstream_layer.weights -= downstream_layer.weight_deltas
+    downstream_layer.weights -= downstream_layer.weight_deltas
 
 
 def ANN_run(target, update_weights=False, print_comparison=False):
@@ -207,14 +239,15 @@ def ANN_run(target, update_weights=False, print_comparison=False):
     output_error = calc_output_error(output, target)
 
     if update_weights:
-        calc_errors_in_final_layer(output_error)
+        calc_errors_in_final_layer_mat_mult(output_error)
         calc_output_weight_deltas(output_error)
 
         # iterate error calculation over hidden layers, starting at the end and moving backwards to the start
         for layer_index in range(numHiddenLayers, 0, -1):
             hidden_layer = layers[layer_index - 1]
             downstream_layer = layers[layer_index]
-            calc_errors_in_hidden_layer(hidden_layer, downstream_layer)
+            # calc_errors_in_hidden_layer(hidden_layer, downstream_layer)
+            calc_errors_in_hidden_layer_mat_mult(hidden_layer, downstream_layer)
             update_layer_weights(hidden_layer, downstream_layer)
         layers[0].weights -= layers[0].weight_deltas
     if print_comparison:
@@ -269,13 +302,19 @@ data_count = len(all_data)
 print("Total number of data points: " + data_count.__str__())
 
 training_set_size = math.ceil(data_count * 0.75)
-training_set = all_data[0:training_set_size]
+# training_set = all_data[0:training_set_size]
+training_set = random.sample(all_data, training_set_size)
+all_data = [x for x in all_data if x not in training_set]
 
 validation_set_size = math.floor(data_count * 0.15)
-validation_set = all_data[training_set_size:training_set_size + validation_set_size]
+# validation_set = all_data[training_set_size:training_set_size + validation_set_size]
+validation_set = random.sample(all_data, validation_set_size)
+all_data = [x for x in all_data if x not in validation_set]
 
 testing_set_size = math.floor(data_count * 0.1)
-testing_set = all_data[training_set_size + validation_set_size:training_set_size + validation_set_size + testing_set_size]
+# testing_set = all_data[training_set_size + validation_set_size:training_set_size + validation_set_size + testing_set_size]
+testing_set = random.sample(all_data, testing_set_size)
+all_data = [x for x in all_data if x not in testing_set]
 
 for data_point in training_set:
     for attribute_index in range(len(data_point.attributes)):
@@ -284,7 +323,23 @@ for data_point in training_set:
         maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
         attributes_max[attribute_index] = maximum
 
-for data_point in all_data:
+for data_point in training_set:
+    for attribute_index in range(len(data_point.attributes)):
+        attribute_max = attributes_max[attribute_index]
+        attribute_min = attributes_min[attribute_index]
+        if attribute_max == attribute_min:
+            continue
+        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+
+for data_point in validation_set:
+    for attribute_index in range(len(data_point.attributes)):
+        attribute_max = attributes_max[attribute_index]
+        attribute_min = attributes_min[attribute_index]
+        if attribute_max == attribute_min:
+            continue
+        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+
+for data_point in testing_set:
     for attribute_index in range(len(data_point.attributes)):
         attribute_max = attributes_max[attribute_index]
         attribute_min = attributes_min[attribute_index]
@@ -296,7 +351,7 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 1
+noOfRuns = 500
 bestAccuracy = 0
 
 for i in range(noOfRuns):
@@ -329,7 +384,35 @@ for i in range(noOfRuns):
     print("")
 
 print("\n Best accuracy: ", bestAccuracy, sep="")
+print("Now testing once on testing set...")
 
+correct_guesses = 0
+correct_positives = 0
+correct_negatives = 0
+error_sum = 0
+
+for data_point in testing_set:
+    layers[0].inputs[0] = np.array(data_point.attributes)
+    ANN_run(data_point.classification)
+    if (output_ANN >= 0.5) & (data_point.classification == 1):
+        correct_guesses += 1
+        correct_positives += 1
+    elif (output_ANN < 0.5) & (data_point.classification == 0):
+        correct_guesses += 1
+        correct_negatives += 1
+
+accuracy = 100*correct_guesses/testing_set_size
+if accuracy > bestAccuracy:
+    bestAccuracy = accuracy
+
+# print(error_sum)
+print("Accuracy: ", accuracy, " [", correct_guesses, "/", testing_set_size, "] ", sep="", end="")
+print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
+print("")
+
+end_time = time.time()
+elapsed_time = end_time - start_time
+print("Elapsed time: ", elapsed_time.__str__(), " seconds.")
 # For every training example, until overall error becomes sufficiently low, do:
 #   1.  Compute output from input (forwards)
 #   2.  Compute error terms in output layer
