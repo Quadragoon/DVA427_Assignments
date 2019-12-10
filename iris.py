@@ -37,6 +37,7 @@ for data_point in all_data:
 ##########################################################
 zadeh_operators = True
 
+
 def fuzzy_AND(a, b):
     if zadeh_operators:
         return min(a, b)
