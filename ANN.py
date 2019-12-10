@@ -2,12 +2,13 @@ import numpy as np
 import math
 import time
 import random
+import lab_library
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
 np.random.seed()
 numInputParameters = 19  # >= 1
-numHiddenLayers = 1  # >= 0
+numHiddenLayers = 1 # >= 0
 hiddenLayerSize = 15  # > 0
 eta = 0.3  # > 0
 
@@ -351,7 +352,7 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 500
+noOfRuns = 100
 bestAccuracy = 0
 
 for i in range(noOfRuns):
