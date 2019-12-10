@@ -83,7 +83,7 @@ def fuzzy_long(x):
     return k*x+m
 
 
-class FuzzyCategory:
+class FuzzyClassifiedAttribute:
     def __init__(self, short, medium, long):
         self.short = short
         self.medium = medium
@@ -91,18 +91,18 @@ class FuzzyCategory:
 
 
 class Iris:
-    def __init__(self, fuzzy_categories):
-        self.fuzzy_categories = fuzzy_categories
+    def __init__(self, classified_attributes):
+        self.classified_attributes = classified_attributes
         self.classification = 0
 
 
 irises = list()
 
 for data_point in all_data:
-    fuzzy_categories = list()
+    fuzzy_classified_attributes = list()
     for attribute in data_point.attributes:
-        fuzzy_categories.append(FuzzyCategory(fuzzy_short(attribute), fuzzy_medium(attribute), fuzzy_long(attribute)))
-    new_iris = Iris(fuzzy_categories)
+        fuzzy_classified_attributes.append(FuzzyClassifiedAttribute(fuzzy_short(attribute), fuzzy_medium(attribute), fuzzy_long(attribute)))
+    new_iris = Iris(fuzzy_classified_attributes)
     new_iris.classification = data_point.classification
     irises.append(new_iris)
 
@@ -113,5 +113,3 @@ for data_point in all_data:
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Elapsed time: ", elapsed_time.__str__(), " seconds.")
-
-
