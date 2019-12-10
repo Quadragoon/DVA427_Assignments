@@ -259,8 +259,6 @@ def ANN_run(target, update_weights=False, print_comparison=False):
 
 CreateLayers()
 
-all_data = lablib.import_data_from_file("assignment1.txt", 19)
-
 # data_file = open("assignment1.txt", mode="r")
 #
 # line = data_file.readline()
@@ -303,6 +301,16 @@ all_data = lablib.import_data_from_file("assignment1.txt", 19)
 #
 # data_count = len(all_data)
 # print("Total number of data points: " + data_count.__str__())
+
+all_data = lablib.import_data_from_file("assignment1.txt", 19)
+attributes_max = list()
+attributes_min = list()
+data_count = len(all_data)
+
+# initialize max and min attribute lists to permit indexing later on
+for attribute in all_data[0].attributes:
+    attributes_max.append(attribute)
+    attributes_min.append(attribute)
 
 training_set_size = math.ceil(data_count * 0.75)
 # training_set = all_data[0:training_set_size]
