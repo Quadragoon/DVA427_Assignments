@@ -147,16 +147,20 @@ def calc_output_error(output, target):
     return output_error
 
 
-def calc_errors_in_final_layer_new_but_not_working(output_error):
-    layers[-1].errors = layers[-1].outputs * output_error
-
-
 def calc_errors_in_final_layer(output_error):
     final_layer = layers[-1]
     weighted_error_matrix = output_error * final_layer.weights
     for unit_index in range(final_layer.size):
         unit_output = final_layer.outputs[0, unit_index]
         final_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * weighted_error_matrix[unit_index, 0])
+
+
+def calc_errors_in_final_layer_mat_mult(output_error):
+    final_layer = layers[-1]
+    weighted_error_matrix = np.diag(output_error * np.transpose(final_layer.weights)[0])
+    inverted_outputs = np.diag((-final_layer.outputs + 1)[0])
+    final_layer.errors = final_layer.outputs.dot(inverted_outputs)
+    final_layer.errors = final_layer.errors.dot(weighted_error_matrix)
 
 
 def calc_errors_in_hidden_layer(hidden_layer, downstream_layer):
@@ -235,7 +239,7 @@ def ANN_run(target, update_weights=False, print_comparison=False):
     output_error = calc_output_error(output, target)
 
     if update_weights:
-        calc_errors_in_final_layer(output_error)
+        calc_errors_in_final_layer_mat_mult(output_error)
         calc_output_weight_deltas(output_error)
 
         # iterate error calculation over hidden layers, starting at the end and moving backwards to the start
