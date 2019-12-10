@@ -35,6 +35,21 @@ for data_point in all_data:
 ##########################################################
 # CLASSIFICATION #########################################
 ##########################################################
+zadeh_operators = True
+
+def fuzzy_AND(a, b):
+    if zadeh_operators:
+        return min(a, b)
+    else:
+        return a*b
+
+
+def fuzzy_OR(a, b):
+    if zadeh_operators:
+        return max(a, b)
+    else:
+        return 1 - ((1-a)*(1-b))
+
 
 end_time = time.time()
 elapsed_time = end_time - start_time
@@ -56,7 +71,7 @@ def fuzzy_medium(x):
     else:
         k = -2.5
         m = 2.5
-    return k * x + m
+    return k*x+m
 
 
 def fuzzy_long(x):
