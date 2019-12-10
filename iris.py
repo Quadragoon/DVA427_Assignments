@@ -122,16 +122,3 @@ print("")
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Elapsed time: ", elapsed_time.__str__(), " seconds.")
-# For every training example, until overall error becomes sufficiently low, do:
-#   1.  Compute output from input (forwards)
-#   2.  Compute error terms in output layer
-#   3.  Compute error terms in hidden layers (backwards)
-#   4.  Update weights using error terms
-
-# input [size INPUTSx1]
-
-# output [size 1x1]
-
-# hidden layer weights [size INPUTSxINPUTS (but the last layer has size 1xINPUTS)]
-
-# error terms (2d list: error term j of hidden layer unit j has size rows(layer weight j))
