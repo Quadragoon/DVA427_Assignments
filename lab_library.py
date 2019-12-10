@@ -1,5 +1,5 @@
 def import_data_from_file(filename, num_attributes, has_classification=True):
-    data_file = open("assignment1.txt", mode="r")
+    data_file = open(filename, mode="r")
 
     line = data_file.readline()
     while line != "@data\n":
