@@ -39,3 +39,31 @@ for data_point in all_data:
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Elapsed time: ", elapsed_time.__str__(), " seconds.")
+
+
+def fuzzy_short(x):
+    if x > 0.6:
+        return 0
+    k = -1/0.6
+    m = 0
+    return k*x+m
+
+
+def fuzzy_medium(x):
+    if x <= 0.6:
+        k = 1/0.6
+        m = 0
+    else:
+        k = -2.5
+        m = 2.5
+    return k * x + m
+
+
+def fuzzy_long(x):
+    if x < 0.6:
+        return 0
+    else:
+        k = 2.5
+        m = -1.5
+    return k*x+m
+
