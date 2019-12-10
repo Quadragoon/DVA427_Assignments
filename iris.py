@@ -42,14 +42,14 @@ for data_point in all_data:
 zadeh_operators = True
 
 
-def fuzzy_AND(a, b):
+def AND(a, b):
     if zadeh_operators:
         return min(a, b)
     else:
         return a*b
 
 
-def fuzzy_OR(a, b):
+def OR(a, b):
     if zadeh_operators:
         return max(a, b)
     else:
@@ -105,6 +105,73 @@ for data_point in all_data:
     new_iris = Iris(fuzzy_classified_attributes)
     new_iris.classification = data_point.classification
     irises.append(new_iris)
+
+
+def fuzzy_r1(iris):
+    short = 0
+    medium = 1
+    long = 2
+
+    x1 = iris.classified_attributes[0]
+    x2 = iris.classified_attributes[1]
+    x3 = iris.classified_attributes[2]
+    x4 = iris.classified_attributes[3]
+
+    ax1 = OR(x1[short], x1[long])
+    ax2 = OR(x2[medium], x2[long])
+    ax3 = OR(x3[medium], x3[long])
+    ax4 = x4[medium]
+
+    return AND(AND(ax1, ax2), AND(ax3, ax4))
+
+
+def fuzzy_r2(iris):
+    short = 0
+    medium = 1
+    long = 2
+
+    x3 = iris.classified_attributes[2]
+    x4 = iris.classified_attributes[3]
+
+    ax3 = OR(x3[short], x3[medium])
+    ax4 = x4[short]
+
+    return AND(ax3, ax4)
+
+def fuzzy_r3(iris):
+    short = 0
+    medium = 1
+    long = 2
+
+    x2 = iris.classified_attributes[1]
+    x3 = iris.classified_attributes[2]
+    x4 = iris.classified_attributes[3]
+
+    ax2 = OR(x2[short], x2[medium])
+    ax3 = x3[long]
+    ax4 = x4[long]
+
+    return AND(AND(ax2, ax3), ax4)
+
+
+def fuzzy_r4(iris):
+    short = 0
+    medium = 1
+    long = 2
+
+    x1 = iris.classified_attributes[0]
+    x2 = iris.classified_attributes[1]
+    x3 = iris.classified_attributes[2]
+    x4 = iris.classified_attributes[3]
+
+    ax1 = x1[medium]
+    ax2 = OR(x2[short], x2[medium])
+    ax3 = x3[short]
+    ax4 = x4[long]
+
+    return AND(AND(ax1, ax2), AND(ax3, ax4))
+
+fuzzy_r1(irises[0])
 
 ##########################################################
 # FINALIZATION ###########################################
