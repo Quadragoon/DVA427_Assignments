@@ -1,4 +1,4 @@
-def import_data_from_file(filename, num_attributes, has_classification=True):
+def import_data_from_file(filename, num_attributes, has_classification=True, sep=","):
     data_file = open(filename, mode="r")
 
     line = data_file.readline()
@@ -17,8 +17,10 @@ def import_data_from_file(filename, num_attributes, has_classification=True):
     all_data = []
 
     for line in data_file:
+        if not any(character.isdigit() for character in line):
+            continue
         data_point = Data()
-        data_point.attributes = list(map(float, line.split(",")))
+        data_point.attributes = list(map(float, line.split(sep)))
         if has_classification:
             data_point.classification = int(data_point.attributes[-1])
             del data_point.attributes[-1]
