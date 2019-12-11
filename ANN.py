@@ -26,7 +26,7 @@ numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 15  # > 0
 eta = 0.3  # > 0
-noOfRuns = 100
+noOfRuns = 500
 
 output_ANN = 0.0
 

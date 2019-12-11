@@ -49,13 +49,6 @@ def fuzzy_long(x):
     return k*x+m
 
 
-def defuzz_short(x):
-
-    0.3
-
-    return
-
-
 class FuzzyClassifiedAttribute:
     def __init__(self, short, medium, long):
         self.short = short
@@ -87,14 +80,14 @@ for data_point in all_data:
 zadeh_operators = True
 
 
-def AND(a, b):
+def fuzzy_and(a, b):
     if zadeh_operators:
         return min(a, b)
     else:
         return a*b
 
 
-def OR(a, b):
+def fuzzy_or(a, b):
     if zadeh_operators:
         return max(a, b)
     else:
@@ -107,22 +100,22 @@ def fuzzy_r1(iris):
     x3 = iris.classified_attributes[2]
     x4 = iris.classified_attributes[3]
 
-    ax1 = OR(x1.short, x1.long)
-    ax2 = OR(x2.medium, x2.long)
-    ax3 = OR(x3.medium, x3.long)
+    ax1 = fuzzy_or(x1.short, x1.long)
+    ax2 = fuzzy_or(x2.medium, x2.long)
+    ax3 = fuzzy_or(x3.medium, x3.long)
     ax4 = x4.medium
 
-    return AND(AND(ax1, ax2), AND(ax3, ax4))
+    return fuzzy_and(fuzzy_and(ax1, ax2), fuzzy_and(ax3, ax4))
 
 
 def fuzzy_r2(iris):
     x3 = iris.classified_attributes[2]
     x4 = iris.classified_attributes[3]
 
-    ax3 = OR(x3.short, x3.medium)
+    ax3 = fuzzy_or(x3.short, x3.medium)
     ax4 = x4.short
 
-    return AND(ax3, ax4)
+    return fuzzy_and(ax3, ax4)
 
 
 def fuzzy_r3(iris):
@@ -130,11 +123,11 @@ def fuzzy_r3(iris):
     x3 = iris.classified_attributes[2]
     x4 = iris.classified_attributes[3]
 
-    ax2 = OR(x2.short, x2.medium)
+    ax2 = fuzzy_or(x2.short, x2.medium)
     ax3 = x3.long
     ax4 = x4.long
 
-    return AND(AND(ax2, ax3), ax4)
+    return fuzzy_and(fuzzy_and(ax2, ax3), ax4)
 
 
 def fuzzy_r4(iris):
@@ -144,11 +137,11 @@ def fuzzy_r4(iris):
     x4 = iris.classified_attributes[3]
 
     ax1 = x1.medium
-    ax2 = OR(x2.short, x2.medium)
+    ax2 = fuzzy_or(x2.short, x2.medium)
     ax3 = x3.short
     ax4 = x4.long
 
-    return AND(AND(ax1, ax2), AND(ax3, ax4))
+    return fuzzy_and(fuzzy_and(ax1, ax2), fuzzy_and(ax3, ax4))
 
 
 def naive_classification():
@@ -181,7 +174,8 @@ def naive_classification():
 
     classification_percentage = accurate_classifications / len(all_data) * 100
     print("Naïve classification complete.")
-    print("Accurate classifications: ", accurate_classifications, "/", len(all_data), ". That's ", round(classification_percentage, 3), "%!", sep="")
+    print("Accurate classifications: ", accurate_classifications, "/", len(all_data),
+          ". That's ", round(classification_percentage, 3), "%!", sep="")
 
 
 ##########################################################

@@ -1,3 +1,11 @@
+class Data:
+    attributes = []
+    classification = 0
+
+    def __str__(self):
+        return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
+
+
 def import_data_from_file(filename, num_attributes, has_classification=True, sep=","):
     data_file = open(filename, mode="r")
 
@@ -6,13 +14,6 @@ def import_data_from_file(filename, num_attributes, has_classification=True, sep
         line = data_file.readline()
 
     print("Found data start, processing...")
-
-    class Data:
-        attributes = []
-        classification = 0
-
-        def __str__(self):
-            return "CLASS: " + self.classification.__str__() + "   " + "".join(self.attributes.__str__())
 
     all_data = []
 
