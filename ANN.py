@@ -3,6 +3,22 @@ import math
 import time
 import random
 import lab_library as lablib
+import os
+
+# For every training example, until overall error becomes sufficiently low, do:
+#   1.  Compute output from input (forwards)
+#   2.  Compute error terms in output layer
+#   3.  Compute error terms in hidden layers (backwards)
+#   4.  Update weights using error terms
+
+# input [size INPUTSx1]
+
+# output [size 1x1]
+
+# hidden layer weights [size HIDDENxHIDDEN (but the last layer has size HIDDENx1) and the first layer INPUTSxHIDDEN]
+
+# error terms (2d list: error term j of hidden layer unit j has size rows(layer weight j))
+
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
@@ -11,13 +27,17 @@ numInputParameters = 19  # >= 1
 numHiddenLayers = 1 # >= 0
 hiddenLayerSize = 15  # > 0
 eta = 0.3  # > 0
+noOfRuns = 100
 
 output_ANN = 0.0
 
 start_time = time.time()
+folder_name = str.join("execution_", start_time.__str__())
+path = os.path.join('.', folder_name)
+os.makedirs(path)
 
 
-def createWeightMatrix(first=False, last=False):
+def create_weight_matrix(first=False, last=False):
     if first & last:
         return matrix_create_random(numInputParameters, 1)
     elif first:
@@ -39,14 +59,14 @@ def scalar_sigmoid(value):
 class Layer:
     def __init__(self, size, first=False, last=False):
         self.size = size
-        self.weights = createWeightMatrix(first, last)
+        self.weights = create_weight_matrix(first, last)
         self.inputs = np.zeros((1, size))
         self.errors = np.zeros((1, size))
         self.outputs = np.zeros((1, size))
 
         # create matrix of some size derived from the createWeightMatrix function (which takes into account whether
         # this is the first layer, last layer, or somewhere in between)
-        self.weight_deltas = createWeightMatrix(first, last)
+        self.weight_deltas = create_weight_matrix(first, last)
         # set all matrix elements to zero by multiplying them (by zero)
         self.weight_deltas *= 0
 
@@ -231,7 +251,7 @@ def update_layer_weights_old(hidden_layer, downstream_layer):
     downstream_layer.weights -= downstream_layer.weight_deltas
 
 
-def ANN_run(target, update_weights=False, print_comparison=False):
+def run_ann_on_current_inputs(target, update_weights=False, print_comparison=False):
     global output_ANN
     output = calc_output()
 
@@ -318,27 +338,51 @@ print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
 print("testingSetSize: " + testing_set_size.__str__())
 
-noOfRuns = 100
 bestAccuracy = 0
 
-for i in range(noOfRuns):
-    correct_guesses = 0
-    correct_positives = 0
-    correct_negatives = 0
-    error_sum = 0
 
-    for data_point in training_set:
+class TestData:
+    def __init__(self):
+        self.total = 0
+        self.correct_total = 0
+        self.target_positive = 0
+        self.correct_positive = 0
+        self.target_negative = 0
+        self.correct_negative = 0
+
+
+def run_ANN_on_set(target_set, update_weights=False, file=None):
+    test_data = TestData()
+    for data_point in target_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
-        ANN_run(data_point.classification, update_weights=True)
-    for data_point in validation_set:
-        layers[0].inputs[0] = np.array(data_point.attributes)
-        error_sum += abs(ANN_run(data_point.classification, print_comparison=False))
-        if (output_ANN >= 0.5) & (data_point.classification == 1):
-            correct_guesses += 1
-            correct_positives += 1
-        elif (output_ANN < 0.5) & (data_point.classification == 0):
-            correct_guesses += 1
-            correct_negatives += 1
+        run_ann_on_current_inputs(data_point.classification, update_weights=update_weights)
+        if data_point.classification == 1:
+            test_data.total += 1
+            test_data.target_positive += 1
+            if output_ANN >= 0.5:
+                test_data.correct_positive += 1
+                test_data.correct_total += 1
+        elif data_point.classification == 0:
+            test_data.total += 1
+            test_data.target_negative += 1
+            if output_ANN < 0.5:
+                test_data.correct_negative += 1
+                test_data.correct_total += 1
+    if file is not None:
+        line = ' '.join([test_data.correct_total.__str__(), test_data.total.__str__(),
+                            test_data.correct_positive.__str__(), test_data.target_positive.__str__(),
+                            test_data.correct_negative.__str__(), test_data.target_negative.__str__(), '\n'])
+        file.write(line)
+    return test_data
+
+
+for i in range(noOfRuns):
+    training_set_data = run_ANN_on_set(training_set, update_weights=True)
+
+    validation_set_data = run_ANN_on_set(validation_set)
+    correct_guesses = validation_set_data.correct_total
+    correct_positives = validation_set_data.correct_positive
+    correct_negatives = validation_set_data.correct_negative
 
     accuracy = 100*correct_guesses/validation_set_size
     if accuracy > bestAccuracy:
@@ -346,50 +390,31 @@ for i in range(noOfRuns):
 
     print("i:  ", i, " ", sep="", end="")
     # print(error_sum)
-    print("Accuracy: ", accuracy, " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
+    print("Accuracy: ", round(accuracy, 2), " [", correct_guesses, "/", validation_set_size, "] ", sep="", end="")
     print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
     print("")
 
 print("\n Best accuracy: ", bestAccuracy, sep="")
 print("Now testing once on testing set...")
 
-correct_guesses = 0
-correct_positives = 0
-correct_negatives = 0
-error_sum = 0
-
-for data_point in testing_set:
-    layers[0].inputs[0] = np.array(data_point.attributes)
-    ANN_run(data_point.classification)
-    if (output_ANN >= 0.5) & (data_point.classification == 1):
-        correct_guesses += 1
-        correct_positives += 1
-    elif (output_ANN < 0.5) & (data_point.classification == 0):
-        correct_guesses += 1
-        correct_negatives += 1
+testing_set_data = run_ANN_on_set(testing_set)
+correct_guesses = testing_set_data.correct_total
+target_positives = testing_set_data.target_positive
+correct_positives = testing_set_data.correct_positive
+target_negatives = testing_set_data.target_negative
+correct_negatives = testing_set_data.correct_negative
 
 accuracy = 100*correct_guesses/testing_set_size
-if accuracy > bestAccuracy:
-    bestAccuracy = accuracy
+positive_accuracy = 100 * correct_positives / target_positives
+negative_accuracy = 100 * correct_negatives / target_negatives
 
 # print(error_sum)
-print("Accuracy: ", accuracy, " [", correct_guesses, "/", testing_set_size, "] ", sep="", end="")
-print("Correct positives: ", correct_positives, "   Correct negatives: ", correct_negatives, sep="", end="")
+print("Accuracy: ", round(accuracy, 2), " [", correct_guesses, "/", testing_set_size, "] ", sep="")
+print("Positives accuracy: ", round(positive_accuracy, 2), " [", correct_positives, "/", target_positives, "] ", sep="")
+print("Negatives accuracy: ", round(negative_accuracy, 2), " [", correct_negatives, "/", target_negatives, "] ", sep="")
+
 print("")
 
 end_time = time.time()
 elapsed_time = end_time - start_time
 print("Elapsed time: ", elapsed_time.__str__(), " seconds.")
-# For every training example, until overall error becomes sufficiently low, do:
-#   1.  Compute output from input (forwards)
-#   2.  Compute error terms in output layer
-#   3.  Compute error terms in hidden layers (backwards)
-#   4.  Update weights using error terms
-
-# input [size INPUTSx1]
-
-# output [size 1x1]
-
-# hidden layer weights [size INPUTSxINPUTS (but the last layer has size 1xINPUTS)]
-
-# error terms (2d list: error term j of hidden layer unit j has size rows(layer weight j))
