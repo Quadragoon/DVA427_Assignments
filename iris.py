@@ -1,17 +1,16 @@
-import numpy as np
 import time
 import lab_library as lablib
 
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
-np.random.seed()
-
 start_time = time.time()
 
 all_data = lablib.import_data_from_file("iris.txt", 4, sep=" ")
 attributes_min = list()
 attributes_max = list()
+irises = list()
+
 
 # initialize attribute min and max lists to allow indexing in them later on
 for attribute in all_data[0].attributes:
@@ -34,26 +33,6 @@ for data_point in all_data:
         if attribute_max == attribute_min:
             continue
         data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
-
-
-##########################################################
-# CLASSIFICATION #########################################
-##########################################################
-zadeh_operators = True
-
-
-def AND(a, b):
-    if zadeh_operators:
-        return min(a, b)
-    else:
-        return a*b
-
-
-def OR(a, b):
-    if zadeh_operators:
-        return max(a, b)
-    else:
-        return 1 - ((1-a)*(1-b))
 
 
 def fuzzy_short(x):
@@ -102,15 +81,36 @@ class Iris:
         self.classification = 0
 
 
-irises = list()
-
 for data_point in all_data:
     fuzzy_classified_attributes = list()
     for attribute in data_point.attributes:
-        fuzzy_classified_attributes.append(FuzzyClassifiedAttribute(fuzzy_short(attribute), fuzzy_medium(attribute), fuzzy_long(attribute)))
+        short_value = fuzzy_short(attribute)
+        medium_value = fuzzy_medium(attribute)
+        long_value = fuzzy_long(attribute)
+        fuzzy_classified_attributes.append(FuzzyClassifiedAttribute(short_value, medium_value, long_value))
     new_iris = Iris(fuzzy_classified_attributes)
     new_iris.classification = data_point.classification
     irises.append(new_iris)
+
+
+##########################################################
+# CLASSIFICATION #########################################
+##########################################################
+zadeh_operators = True
+
+
+def AND(a, b):
+    if zadeh_operators:
+        return min(a, b)
+    else:
+        return a*b
+
+
+def OR(a, b):
+    if zadeh_operators:
+        return max(a, b)
+    else:
+        return 1 - ((1-a)*(1-b))
 
 
 def fuzzy_r1(iris):
@@ -163,14 +163,44 @@ def fuzzy_r4(iris):
     return AND(AND(ax1, ax2), AND(ax3, ax4))
 
 
-print(fuzzy_r1(irises[0]))
-print(fuzzy_r2(irises[0]))
-print(fuzzy_r3(irises[0]))
-print(fuzzy_r4(irises[0]))
+def naive_classification():
+    accurate_classifications = 0
+    for i in range(len(irises)):
+        iris = irises[i]
+        r1 = fuzzy_r1(iris)
+        r2 = fuzzy_r2(iris)
+        r3 = fuzzy_r3(iris)
+        r4 = fuzzy_r4(iris)
+
+        classed_as = 0
+        max_rule = max(r1, r2, r3, r4)
+        if max_rule == r1:
+            classed_as = 2
+        elif max_rule == r2:
+            classed_as = 1
+        elif max_rule == r3:
+            classed_as = 3
+        elif max_rule == r4:
+            classed_as = 2
+        else:
+            for loop_count in range(3):
+                print("ERROR DURING CLASSIFICATION, ABORT EXPERIMENT, THE IRISES ARE ESCAPING")
+
+        if classed_as == iris.classification:
+            accurate_classifications += 1
+        else:
+            print("Iris #", i, "incorrectly classed as", classed_as, "but is", iris.classification)
+
+    classification_percentage = accurate_classifications / len(all_data) * 100
+    print("Naïve classification complete.")
+    print("Accurate classifications: ", accurate_classifications, "/", len(all_data), ". That's ", round(classification_percentage, 3), "%!", sep="")
+
 
 ##########################################################
 # FINALIZATION ###########################################
 ##########################################################
+
+naive_classification()
 
 end_time = time.time()
 elapsed_time = end_time - start_time
