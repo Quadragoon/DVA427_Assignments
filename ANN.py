@@ -97,9 +97,6 @@ def print_matrices():
     print('------------------')
 
 
-layers = list()
-
-
 def create_layers():
     if numHiddenLayers == 0:
         layers.append(Layer(numInputParameters, first=True, last=True))
@@ -257,7 +254,9 @@ def run_ann_on_current_input(target, update_weights=False, print_comparison=Fals
     return output_error
 
 
+layers = list()
 create_layers()
+
 
 all_data = lablib.import_data_from_file("assignment1.txt", 19)
 attributes_max = list()
@@ -306,6 +305,7 @@ class TestData:
 def run_ann_on_set(target_set, update_weights=False, file=None):
     test_data = TestData()
     for data_point in target_set:
+        # set inputs for ANN
         layers[0].inputs[0] = np.array(data_point.attributes)
         run_ann_on_current_input(data_point.classification, update_weights=update_weights)
         if data_point.classification == 1:
@@ -329,7 +329,7 @@ def run_ann_on_set(target_set, update_weights=False, file=None):
 
 
 for i in range(noOfRuns):
-    training_set_data = run_ann_on_set(training_set, update_weights=True)
+    run_ann_on_set(training_set, update_weights=True)
 
     validation_set_data = run_ann_on_set(validation_set)
     correct_guesses = validation_set_data.correct_total
