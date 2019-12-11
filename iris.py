@@ -60,7 +60,7 @@ def fuzzy_short(x):
     if x > 0.6:
         return 0
     k = -1/0.6
-    m = 0
+    m = 1
     return k*x+m
 
 
@@ -82,6 +82,12 @@ def fuzzy_long(x):
         m = -1.5
     return k*x+m
 
+
+def defuzz_short(x):
+
+    0.3
+
+    return
 
 class FuzzyClassifiedAttribute:
     def __init__(self, short, medium, long):
