@@ -13,26 +13,13 @@ irises = list()
 
 
 # initialize attribute min and max lists to allow indexing in them later on
-for attribute in all_data[0].attributes:
-    attributes_min.append(attribute)
-    attributes_max.append(attribute)
+lablib.initialize_max_and_min_attribute_lists(attributes_min, attributes_max, all_data[0])
 
 # read all data, finding the maximum and minimum values for each attribute
-for data_point in all_data:
-    for attribute_index in range(len(data_point.attributes)):
-        minimum = min(attributes_min[attribute_index], data_point.attributes[attribute_index])
-        attributes_min[attribute_index] = minimum
-        maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
-        attributes_max[attribute_index] = maximum
+lablib.find_max_and_min_attributes_in_set(all_data, attributes_min, attributes_max)
 
 # normalize data to land between 0 and 1 using the min and max values (min being 0 and max being 1)
-for data_point in all_data:
-    for attribute_index in range(len(data_point.attributes)):
-        attribute_max = attributes_max[attribute_index]
-        attribute_min = attributes_min[attribute_index]
-        if attribute_max == attribute_min:
-            continue
-        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+lablib.normalize_data_set(all_data, attributes_min, attributes_max)
 
 
 def fuzzy_short(x):
@@ -67,6 +54,7 @@ def defuzz_short(x):
     0.3
 
     return
+
 
 class FuzzyClassifiedAttribute:
     def __init__(self, short, medium, long):

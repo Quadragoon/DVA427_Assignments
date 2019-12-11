@@ -22,9 +22,8 @@ import os
 ##########################################################
 # INITIALIZATION #########################################
 ##########################################################
-np.random.seed()
 numInputParameters = 19  # >= 1
-numHiddenLayers = 1 # >= 0
+numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 15  # > 0
 eta = 0.3  # > 0
 noOfRuns = 100
@@ -32,9 +31,9 @@ noOfRuns = 100
 output_ANN = 0.0
 
 start_time = time.time()
-folder_name = str.join("execution_", start_time.__str__())
-path = os.path.join('.', folder_name)
-os.makedirs(path)
+folder_name = '_'.join(["execution", start_time.__str__()])
+path = os.path.join('', folder_name)
+# os.makedirs(path)
 
 
 def create_weight_matrix(first=False, last=False):
@@ -72,19 +71,19 @@ class Layer:
 
 
 def matrix_create_random(rows, col):
-    return np.random.random(size=(rows,col)) * 2 - 1
+    return np.random.random(size=(rows, col)) * 2 - 1
 
 
 def matrix_print(matrix):
-    print(matrix,"\n")
+    print(matrix, "\n")
     return
 
 
-def printMatrices():
+def print_matrices():
     print('--- printing matrices --------')
     print('hidden layers')
     for layer in layers:
-        if ((layer != layers[0]) & (layer != layers[-1])):
+        if (layer != layers[0]) & (layer != layers[-1]):
             matrix_print(layer.weights)
     print('input')
     matrix_print(layers[0].inputs)
@@ -101,7 +100,7 @@ def printMatrices():
 layers = list()
 
 
-def CreateLayers():
+def create_layers():
     if numHiddenLayers == 0:
         layers.append(Layer(numInputParameters, first=True, last=True))
     else:
@@ -116,7 +115,7 @@ def CreateLayers():
     layers[0].inputs = matrix_create_random(1, numInputParameters)
 
 
-def CreateTestingLayers():
+def create_testing_layers():
     global numHiddenLayers
     numHiddenLayers = 1
     global numInputParameters
@@ -197,24 +196,6 @@ def calc_errors_in_hidden_layer_mat_mult(hidden_layer, downstream_layer):
     downstream_error_sums = downstream_layer.errors.dot(hidden_layer.weights.transpose())
     inverted_outputs = np.diag((-hidden_layer.outputs + 1)[0])
     hidden_layer.errors = hidden_layer.outputs.dot(inverted_outputs).dot(np.diag(downstream_error_sums[0]))
-    #for unit_index in range(hidden_layer.size):
-    #    unit_output = hidden_layer.outputs[0, unit_index]
-    #    # calculate error terms according to this formula:
-    #    # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
-    #    downstream_error_sum = downstream_layer.errors.dot(hidden_layer.weights[unit_index].transpose())[0]
-    #    hidden_layer.errors[0, unit_index] = ((1 - unit_output) * unit_output * downstream_error_sum)
-
-
-def calc_errors_in_hidden_layer_old(hidden_layer, downstream_layer):
-    for unit_index in range(hidden_layer.size):
-        downstream_error_sum = 0
-        # calculate error terms according to this formula:
-        # delta_j = (1 - O_j) * O_j * Sigma(delta_k * W_kj)
-        for downstream_unit_index in range(downstream_layer.size):
-            downstream_error_sum += (downstream_layer.errors[0, downstream_unit_index] * hidden_layer.weights[
-                unit_index, downstream_unit_index])
-        hidden_layer.errors[0, unit_index] = (
-                    (1 - hidden_layer.outputs[0, unit_index]) * hidden_layer.outputs[0, unit_index] * downstream_error_sum)
 
 
 def calc_output_weight_deltas(output_error):
@@ -251,7 +232,7 @@ def update_layer_weights_old(hidden_layer, downstream_layer):
     downstream_layer.weights -= downstream_layer.weight_deltas
 
 
-def run_ann_on_current_inputs(target, update_weights=False, print_comparison=False):
+def run_ann_on_current_input(target, update_weights=False, print_comparison=False):
     global output_ANN
     output = calc_output()
 
@@ -276,7 +257,7 @@ def run_ann_on_current_inputs(target, update_weights=False, print_comparison=Fal
     return output_error
 
 
-CreateLayers()
+create_layers()
 
 all_data = lablib.import_data_from_file("assignment1.txt", 19)
 attributes_max = list()
@@ -284,55 +265,26 @@ attributes_min = list()
 data_count = len(all_data)
 
 # initialize max and min attribute lists to permit indexing later on
-for attribute in all_data[0].attributes:
-    attributes_max.append(attribute)
-    attributes_min.append(attribute)
+lablib.initialize_max_and_min_attribute_lists(attributes_min, attributes_max, all_data[0])
 
 training_set_size = math.ceil(data_count * 0.75)
-# training_set = all_data[0:training_set_size]
 training_set = random.sample(all_data, training_set_size)
 all_data = [x for x in all_data if x not in training_set]
 
 validation_set_size = math.floor(data_count * 0.15)
-# validation_set = all_data[training_set_size:training_set_size + validation_set_size]
 validation_set = random.sample(all_data, validation_set_size)
 all_data = [x for x in all_data if x not in validation_set]
 
 testing_set_size = math.floor(data_count * 0.1)
-# testing_set = all_data[training_set_size + validation_set_size:training_set_size + validation_set_size + testing_set_size]
 testing_set = random.sample(all_data, testing_set_size)
 all_data = [x for x in all_data if x not in testing_set]
 
-for data_point in training_set:
-    for attribute_index in range(len(data_point.attributes)):
-        minimum = min(attributes_min[attribute_index], data_point.attributes[attribute_index])
-        attributes_min[attribute_index] = minimum
-        maximum = max(attributes_max[attribute_index], data_point.attributes[attribute_index])
-        attributes_max[attribute_index] = maximum
 
-for data_point in training_set:
-    for attribute_index in range(len(data_point.attributes)):
-        attribute_max = attributes_max[attribute_index]
-        attribute_min = attributes_min[attribute_index]
-        if attribute_max == attribute_min:
-            continue
-        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+lablib.find_max_and_min_attributes_in_set(training_set, attributes_min, attributes_max)
 
-for data_point in validation_set:
-    for attribute_index in range(len(data_point.attributes)):
-        attribute_max = attributes_max[attribute_index]
-        attribute_min = attributes_min[attribute_index]
-        if attribute_max == attribute_min:
-            continue
-        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
-
-for data_point in testing_set:
-    for attribute_index in range(len(data_point.attributes)):
-        attribute_max = attributes_max[attribute_index]
-        attribute_min = attributes_min[attribute_index]
-        if attribute_max == attribute_min:
-            continue
-        data_point.attributes[attribute_index] = (data_point.attributes[attribute_index] - attribute_min) / (attribute_max - attribute_min)
+lablib.normalize_data_set(training_set, attributes_min, attributes_max)
+lablib.normalize_data_set(validation_set, attributes_min, attributes_max)
+lablib.normalize_data_set(testing_set, attributes_min, attributes_max)
 
 print("trainingSetSize: " + training_set_size.__str__())
 print("validationSetSize: " + validation_set_size.__str__())
@@ -351,11 +303,11 @@ class TestData:
         self.correct_negative = 0
 
 
-def run_ANN_on_set(target_set, update_weights=False, file=None):
+def run_ann_on_set(target_set, update_weights=False, file=None):
     test_data = TestData()
     for data_point in target_set:
         layers[0].inputs[0] = np.array(data_point.attributes)
-        run_ann_on_current_inputs(data_point.classification, update_weights=update_weights)
+        run_ann_on_current_input(data_point.classification, update_weights=update_weights)
         if data_point.classification == 1:
             test_data.total += 1
             test_data.target_positive += 1
@@ -370,16 +322,16 @@ def run_ANN_on_set(target_set, update_weights=False, file=None):
                 test_data.correct_total += 1
     if file is not None:
         line = ' '.join([test_data.correct_total.__str__(), test_data.total.__str__(),
-                            test_data.correct_positive.__str__(), test_data.target_positive.__str__(),
-                            test_data.correct_negative.__str__(), test_data.target_negative.__str__(), '\n'])
+                        test_data.correct_positive.__str__(), test_data.target_positive.__str__(),
+                        test_data.correct_negative.__str__(), test_data.target_negative.__str__(), '\n'])
         file.write(line)
     return test_data
 
 
 for i in range(noOfRuns):
-    training_set_data = run_ANN_on_set(training_set, update_weights=True)
+    training_set_data = run_ann_on_set(training_set, update_weights=True)
 
-    validation_set_data = run_ANN_on_set(validation_set)
+    validation_set_data = run_ann_on_set(validation_set)
     correct_guesses = validation_set_data.correct_total
     correct_positives = validation_set_data.correct_positive
     correct_negatives = validation_set_data.correct_negative
@@ -397,7 +349,7 @@ for i in range(noOfRuns):
 print("\n Best accuracy: ", bestAccuracy, sep="")
 print("Now testing once on testing set...")
 
-testing_set_data = run_ANN_on_set(testing_set)
+testing_set_data = run_ann_on_set(testing_set)
 correct_guesses = testing_set_data.correct_total
 target_positives = testing_set_data.target_positive
 correct_positives = testing_set_data.correct_positive
