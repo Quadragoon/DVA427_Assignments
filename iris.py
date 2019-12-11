@@ -62,6 +62,12 @@ def fuzzy_long(x):
     return k*x+m
 
 
+def defuzz_short(x):
+
+    0.3
+
+    return
+
 class FuzzyClassifiedAttribute:
     def __init__(self, short, medium, long):
         self.short = short
