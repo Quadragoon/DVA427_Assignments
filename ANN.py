@@ -26,14 +26,14 @@ numInputParameters = 19  # >= 1
 numHiddenLayers = 1  # >= 0
 hiddenLayerSize = 15  # > 0
 eta = 0.3  # > 0
-noOfRuns = 500
+noOfRuns = 300
 
 output_ANN = 0.0
 
 start_time = time.time()
 folder_name = '_'.join(["execution", start_time.__str__()])
 path = os.path.join('', folder_name)
-# os.makedirs(path)
+os.makedirs(path)
 
 
 def create_weight_matrix(first=False, last=False):
@@ -254,9 +254,54 @@ def run_ann_on_current_input(target, update_weights=False, print_comparison=Fals
     return output_error
 
 
+class TestData:
+    def __init__(self):
+        self.total = 0
+        self.correct_total = 0
+        self.target_positive = 0
+        self.correct_positive = 0
+        self.target_negative = 0
+        self.correct_negative = 0
+
+
+def run_ann_on_set(target_set, update_weights=False, file=None, first_run_on_set=False):
+    test_data = TestData()
+    for data_point in target_set:
+        # set inputs for ANN
+        layers[0].inputs[0] = np.array(data_point.attributes)
+        run_ann_on_current_input(data_point.classification, update_weights=update_weights)
+        if data_point.classification == 1:
+            test_data.total += 1
+            test_data.target_positive += 1
+            if output_ANN >= 0.5:
+                test_data.correct_positive += 1
+                test_data.correct_total += 1
+        elif data_point.classification == 0:
+            test_data.total += 1
+            test_data.target_negative += 1
+            if output_ANN < 0.5:
+                test_data.correct_negative += 1
+                test_data.correct_total += 1
+    if file is not None:
+        if first_run_on_set:
+            line = ' '.join(["Total:", test_data.total.__str__(),
+                             " Positive:", test_data.target_positive.__str__(),
+                             " Negative:", test_data.target_negative.__str__(), '\n'])
+            file.write(line)
+            file.write("@data\n")
+        line = ' '.join([test_data.correct_total.__str__(),
+                         test_data.correct_positive.__str__(),
+                         test_data.correct_negative.__str__(), '\n'])
+        file.write(line)
+    return test_data
+
+
+#############################################################
+#############################################################
+#############################################################
+
 layers = list()
 create_layers()
-
 
 all_data = lablib.import_data_from_file("assignment1.txt", 19)
 attributes_max = list()
@@ -278,7 +323,6 @@ testing_set_size = math.floor(data_count * 0.1)
 testing_set = random.sample(all_data, testing_set_size)
 all_data = [x for x in all_data if x not in testing_set]
 
-
 lablib.find_max_and_min_attributes_in_set(training_set, attributes_min, attributes_max)
 
 lablib.normalize_data_set(training_set, attributes_min, attributes_max)
@@ -291,47 +335,29 @@ print("testingSetSize: " + testing_set_size.__str__())
 
 bestAccuracy = 0
 
+info_file = open(os.path.join(path, "info.txt"), mode="w+")
+training_results_file = open(os.path.join(path, "training_results.txt"), mode="w+")
+validation_results_file = open(os.path.join(path, "validation_results.txt"), mode="w+")
+testing_results_file = open(os.path.join(path, "testing_results.txt"), mode="w+")
 
-class TestData:
-    def __init__(self):
-        self.total = 0
-        self.correct_total = 0
-        self.target_positive = 0
-        self.correct_positive = 0
-        self.target_negative = 0
-        self.correct_negative = 0
-
-
-def run_ann_on_set(target_set, update_weights=False, file=None):
-    test_data = TestData()
-    for data_point in target_set:
-        # set inputs for ANN
-        layers[0].inputs[0] = np.array(data_point.attributes)
-        run_ann_on_current_input(data_point.classification, update_weights=update_weights)
-        if data_point.classification == 1:
-            test_data.total += 1
-            test_data.target_positive += 1
-            if output_ANN >= 0.5:
-                test_data.correct_positive += 1
-                test_data.correct_total += 1
-        elif data_point.classification == 0:
-            test_data.total += 1
-            test_data.target_negative += 1
-            if output_ANN < 0.5:
-                test_data.correct_negative += 1
-                test_data.correct_total += 1
-    if file is not None:
-        line = ' '.join([test_data.correct_total.__str__(), test_data.total.__str__(),
-                        test_data.correct_positive.__str__(), test_data.target_positive.__str__(),
-                        test_data.correct_negative.__str__(), test_data.target_negative.__str__(), '\n'])
-        file.write(line)
-    return test_data
-
+if info_file is not None:
+    line = ' '.join(["Eta:", eta.__str__(), '\n',
+                     "  #_of_runs:", noOfRuns.__str__(), '\n',
+                     "  hidden_layer_size:", hiddenLayerSize.__str__(), '\n',
+                     "  num_hidden_layers:", numHiddenLayers.__str__(), '\n'])
+    info_file.write(line)
+    info_file.close()
 
 for i in range(noOfRuns):
-    run_ann_on_set(training_set, update_weights=True)
+    if i == 0:
+        run_ann_on_set(training_set, update_weights=True, file=training_results_file, first_run_on_set=True)
+    else:
+        run_ann_on_set(training_set, update_weights=True, file=training_results_file)
 
-    validation_set_data = run_ann_on_set(validation_set)
+    if i == 0:
+        validation_set_data = run_ann_on_set(validation_set, file=validation_results_file, first_run_on_set=True)
+    else:
+        validation_set_data = run_ann_on_set(validation_set, file=validation_results_file)
     correct_guesses = validation_set_data.correct_total
     correct_positives = validation_set_data.correct_positive
     correct_negatives = validation_set_data.correct_negative
@@ -349,7 +375,7 @@ for i in range(noOfRuns):
 print("\n Best accuracy: ", bestAccuracy, sep="")
 print("Now testing once on testing set...")
 
-testing_set_data = run_ann_on_set(testing_set)
+testing_set_data = run_ann_on_set(testing_set, file=testing_results_file, first_run_on_set=True)
 correct_guesses = testing_set_data.correct_total
 target_positives = testing_set_data.target_positive
 correct_positives = testing_set_data.correct_positive
@@ -366,6 +392,10 @@ print("Positives accuracy: ", round(positive_accuracy, 2), " [", correct_positiv
 print("Negatives accuracy: ", round(negative_accuracy, 2), " [", correct_negatives, "/", target_negatives, "] ", sep="")
 
 print("")
+
+training_results_file.close()
+validation_results_file.close()
+testing_results_file.close()
 
 end_time = time.time()
 elapsed_time = end_time - start_time
