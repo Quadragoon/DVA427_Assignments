@@ -58,7 +58,7 @@ class Individual:
     def mutate(self):
         length = float(len(self.route))
         pos1 = random.random()*length
-        pos2 = index_a
+        pos2 = pos1
         while pos2 == pos1:
             pos2 = random.random()*length
 
