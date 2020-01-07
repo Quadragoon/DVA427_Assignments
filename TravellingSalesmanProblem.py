@@ -38,7 +38,7 @@ class Individual:
     def __init__(self, num_cities, initialize=False):
         self.route = []
         if initialize is True:
-            for i in range(num_cities):
+            for i in range(1, num_cities):
                 self.route.append(i)
             random.shuffle(self.route)
 
@@ -50,24 +50,29 @@ class Individual:
         print("Calculate distance:")
         for city in self.route:
             print("[", city, cities[city].x, cities[city].y, "]")
-        sum = 0
-        for i in range(52):
-            delta = distance(cities[self.route[i-1]], cities[self.route[i]])
-            sum += delta
-            print("d:[", i, "] [", delta, "]")
-        print("SUM: [", sum, "]")
-        return sum
+        distance_sum = 0
 
-    def mutate(self):
-        length = float(len(self.route))
-        pos1 = random.random()*length
-        pos2 = pos1
-        while pos2 == pos1:
-            pos2 = random.random()*length
+        # calculate distance from the start point to the first step on the route
+        delta = distance(cities[0], cities[self.route[0]])
+        # add that distance to total distance traveled
+        distance_sum += delta
+        print("d:[ S ] [", delta, "]")
 
-        # switch elements
-        self.route[pos1], self.route[pos2] = self.route[pos2], self.route[pos1]
+        for i in range(self.route.__len__() - 1):
+            # calculate distance from each destination to the next
+            delta = distance(cities[self.route[i]], cities[self.route[i+1]])
+            # add up the distances
+            distance_sum += delta
+            print("d:[", i, "to", i+1, "] [", delta, "]")
 
+        # calculate distance from the last step on the route to the end point
+        delta = distance(cities[self.route[-1]], cities[0])
+        # add that distance to total distance traveled
+        distance_sum += delta
+        print("d:[ E ] [", delta, "]")
+
+        print("SUM: [", distance_sum, "]")
+        return distance_sum
 
 
 def crossover(parent_a, parent_b):
@@ -99,7 +104,12 @@ def crossover(parent_a, parent_b):
     for i in range(crossover_start, len(difference_set)):
         route_c.append(difference_set[i])
 
-    return route_c
+    print("a: ", route_a)
+    print("c: ", route_c)
+    print("b: ", route_b)
+
+    return 1
+
 
 a = City(0, 0)
 b = City(1, 0)
@@ -117,13 +127,13 @@ print("......")
 individual_a = Individual(52, initialize=True)
 individual_b = Individual(52, initialize=True)
 child = crossover(individual_a, individual_b)
-print(".....", child)
 
 
-# for individual in individuals:
+#for individual in individuals:
 #    for i in range(cities.count()):
 #        individual.route[i]
 #    print(individual.route)
+
 
 
 # Create initial random population
