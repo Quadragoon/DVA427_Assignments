@@ -60,7 +60,8 @@ for data_point in data_points:
 # Assign to every node a tentative distance value: set it to zero for our initial node and to infinity for all other
 # nodes. Set the initial node as current
 
-current_node_id = "F"
+target_id = "F"
+current_node_id = target_id
 current_node = nodes[current_node_id]
 current_node.distance_to_target = 0
 unvisited_nodes = nodes.copy()
@@ -100,12 +101,11 @@ while True:
     # node", and go back to step 3.
 
 for node_id in nodes:
-    if nodes[node_id].distance_to_target == 0: # trying to find a path from the target to the target will get weird...
+    if nodes[node_id].distance_to_target == 0:  # trying to find a path from the target to the target will get weird...
         continue  # ... so we won't try doing that
-    location = node_id
-    print(location, "->", nodes[location].best_neighbour, end="")
-    location = nodes[location].best_neighbour
-    while location != "F":
-        print(" ->", nodes[location].best_neighbour, end="")
-        location = nodes[location].best_neighbour
+    print(node_id, "->", nodes[node_id].best_neighbour, end="")
+    location = nodes[nodes[node_id].best_neighbour]
+    while location != nodes[target_id]:
+        print(" ->", location.best_neighbour, end="")
+        location = nodes[location.best_neighbour]
     print("")
