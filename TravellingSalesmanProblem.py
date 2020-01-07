@@ -1,6 +1,8 @@
 from math import *
 import random
 import lab_library as lablib
+import operator
+import numpy as np
 
 cities = list()
 
@@ -62,7 +64,7 @@ class Individual:
         distance_sum += delta
         # print("d:[ E ] [", delta, "]")
 
-        print("DISTANCE SUM: [", distance_sum, "]")
+        # print("DISTANCE SUM: [", distance_sum, "]")
         self.distance = distance_sum
         return distance_sum
 
@@ -142,28 +144,23 @@ while population.__len__() < population_size:
 
 while True:
     # Selection
-    best_distance = population[0].calculate_distance()
-    next_best_distance = population[1].calculate_distance()
-    best_individuals = list()
-    best_individuals.append(population[0])
-    best_individuals.append(population[1])
-
-    if next_best_distance < best_distance:
-        best_distance, next_best_distance = next_best_distance, best_distance
-        best_individuals[0], best_individuals[1] = best_individuals[1], best_individuals[0]
-
     for individual in population:
-        this_distance = individual.calculate_distance()
+        individual.calculate_distance()
+    key_function = operator.attrgetter("distance")
+    population.sort(key=key_function, reverse=False)
 
-        if this_distance < next_best_distance:
-            if this_distance < best_distance:
-                # Replace best individual
-                best_individuals[0], best_individuals[1] = individual, best_individuals[0]
-                best_distance, next_best_distance = this_distance, best_distance
-            else:
-                # Replace next best individual
-                best_individuals[1] = individual
-                next_best_distance = this_distance
+    fitness_ratings = list()
+    total_fitness = 0
+    for individual in population:
+        fitness_ratings.append((individual.distance - population[-1].distance) ** 5)
+        total_fitness += fitness_ratings[-1]
+
+    probability_distribution = list()
+    for fitness in fitness_ratings:
+        weighted_probability = fitness / total_fitness
+        probability_distribution.append(weighted_probability)
+
+    parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
 
         # Crossover
 
@@ -176,10 +173,6 @@ while True:
 
     # Replacement
 
-# for individual in individuals:
-#    for i in range(cities.count()):
-#        individual.route[i]
-#    print(individual.route)
 
 # Create initial random population
 # While termination criteria is not satisfied:
