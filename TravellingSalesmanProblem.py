@@ -69,7 +69,7 @@ class Individual:
         return distance_sum
 
     def mutate(self):
-        length = (len(self.route))
+        length = len(self.route)
         pos1 = random.randrange(0, length)
         pos2 = pos1
         while pos2 == pos1:
@@ -92,7 +92,7 @@ def crossover(parent_a, parent_b):
     route_a = parent_a.route
     route_b = parent_b.route
 
-    crossover_length = random.randrange(5, 10)
+    crossover_length = random.randrange(2, 15)
     crossover_start_index = random.randrange(0, len(route_a) - crossover_length)
     crossover_end_index = crossover_start_index + crossover_length
 
