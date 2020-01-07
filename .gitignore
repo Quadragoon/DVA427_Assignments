@@ -1,2 +1,4 @@
 # Project exclude paths
 /venv/
+/.idea/first_project.iml
+/.idea/

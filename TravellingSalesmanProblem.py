@@ -75,7 +75,7 @@ class Individual:
         while pos2 == pos1:
             pos2 = random.randrange(0, length)
 
-        self.route[pos1] = self.route[pos2]
+        self.route[pos1], self.route[pos2] = self.route[pos2], self.route[pos1]
 
 
 def crossover(parent_a, parent_b):
@@ -83,7 +83,7 @@ def crossover(parent_a, parent_b):
     route_b = parent_b.route
 
     crossover_length = random.randrange(5, 10)
-    crossover_start_index = random.randrange(0, route_a.__len__() - crossover_length)
+    crossover_start_index = random.randrange(0, len(route_a) - crossover_length)
     crossover_end_index = crossover_start_index + crossover_length
 
     crossover_set = route_a[crossover_start_index:crossover_end_index]
@@ -112,6 +112,8 @@ population = list()
 while population.__len__() < population_size:
     population.append(Individual(initialize=True))
 
+best_dist = 99999
+
 while True:
     # Selection
     # Sort based on distance
@@ -119,6 +121,10 @@ while True:
         individual.calculate_distance()
     key_function = operator.attrgetter("distance")
     population.sort(key=key_function, reverse=False)
+
+    if population[0].distance < best_dist:
+        best_dist = population[0].distance
+        print(best_dist)
 
     fitness_ratings = list()
     total_fitness = 0
@@ -133,7 +139,8 @@ while True:
 
     # Create children
     children = list()
-    for i in range(population_size):
+    children.append(population[0])  # elitism
+    for i in range(1, population_size):
         parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
         # Crossover
         child = Individual()
@@ -141,10 +148,10 @@ while True:
         # Mutation
         if random.random() <= prob_mutation:
             child.mutate()
-
-    # population.sort(key=lambda x: x.calculate_distance())
+        children.append(child)
 
     # Replacement
+    population = children
 
 
 # Create initial random population
