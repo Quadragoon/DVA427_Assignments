@@ -9,27 +9,14 @@ infinity = 999999
 num_nodes = 10
 
 
-class Node:
-    def __init__(self, id):
-        self.id = id
-        self.distances = list()
-        self.neighbours = list()
-
-        for i in range(num_nodes):
-            if i == self.id:
-                self.distances.append(0)
-            else:
-                self.distances.append(infinity)
-
-
 class Dijkstra_node:
     def __init__(self):
         self.distance_to_target = infinity
-        self.neighbours = dict()
+        self.neighbour_distances = dict()
         self.best_neighbour = "bonsly"
 
-    def add_neighbour(self, neighbour, distance):
-        self.neighbours[neighbour] = distance
+    def add_neighbour(self, neighbour_id, distance):
+        self.neighbour_distances[neighbour_id] = distance
 
 
 # because we're not only importing numbers, we have to use a custom import function
@@ -85,9 +72,9 @@ while True:
     # neighbour B has length 2, then the distance to B through A will be 6 + 2 = 8. If B was previously marked with a
     # distance greater than 8 then change it to 8. Otherwise, the current value will be kept
 
-    for neighbour_id in current_node.neighbours:
+    for neighbour_id in current_node.neighbour_distances:
         if neighbour_id in unvisited_nodes.keys():
-            node_distance = current_node.distance_to_target + current_node.neighbours[neighbour_id]
+            node_distance = current_node.distance_to_target + current_node.neighbour_distances[neighbour_id]
             if node_distance < nodes[neighbour_id].distance_to_target:
                 nodes[neighbour_id].distance_to_target = node_distance
                 nodes[neighbour_id].best_neighbour = current_node_id
@@ -112,10 +99,10 @@ while True:
     # Otherwise, select the unvisited node that is marked with the smallest tentative distance, set it as the new "current
     # node", and go back to step 3.
 
-for node in nodes:
-    if node == "F":
-        continue
-    location = node
+for node_id in nodes:
+    if nodes[node_id].distance_to_target == 0: # trying to find a path from the target to the target will get weird...
+        continue  # ... so we won't try doing that
+    location = node_id
     print(location, "->", nodes[location].best_neighbour, end="")
     location = nodes[location].best_neighbour
     while location != "F":
