@@ -66,10 +66,6 @@ for data_point in data_points:
     else:
         nodes[second_node].neighbours[first_node] = node_distance
 
-for first_node in nodes:
-    for second_node in nodes[first_node].neighbours:
-        print(first_node, second_node, nodes[first_node].neighbours[second_node])
-
 # Mark all nodes unvisited. Create a set of all the unvisited nodes called the unvisited set
 # Assign to every node a tentative distance value: set it to zero for our initial node and to infinity for all other
 # nodes. Set the initial node as current
@@ -112,10 +108,12 @@ while True:
     # node", and go back to step 3.
 
 for node in nodes:
+    if (node == "F"):
+        continue
     location = node
     print(location, "->", nodes[location].best_neighbour, end="")
     location = nodes[location].best_neighbour
     while location != "F":
-        print("->", nodes[location].best_neighbour, end="")
+        print(" ->", nodes[location].best_neighbour, end="")
         location = nodes[location].best_neighbour
     print("")
