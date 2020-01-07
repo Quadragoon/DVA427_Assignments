@@ -2,21 +2,10 @@ from math import *
 import random
 import lab_library as lablib
 
-
-def import_data(filename, cities):
-    data_file = open(filename, mode="r")
-    i = 0
-    for line in data_file:
-        data = list(map(float, line.split(" ")))
-        id = int(data[0])
-        x = data[1]
-        y = data[2]
-        city_to_import = City(x, y)
-        #print(city_to_import.id, city_to_import.x, city_to_import.y)
-        cities.append(city_to_import)
+cities = list()
 
 
-def import_data_2(filename, cities):
+def import_data_2(filename):
     imported_data = lablib.import_data_from_file(filename, 3, has_classification=False, sep=" ")
     for data_point in imported_data:
         x = data_point.attributes[1]
@@ -35,43 +24,46 @@ class City:
 
 
 class Individual:
-    def __init__(self, num_cities, initialize=False):
+    def __init__(self, initialize=False):
         self.route = []
         if initialize is True:
-            for i in range(1, num_cities):
+            for i in range(1, cities.__len__()):
                 self.route.append(i)
             random.shuffle(self.route)
+        self.distance = -1
 
     def print_route(self):
         print("Route:", self.route)
         return
 
-    def calculate_distance(self, cities):
-        print("Calculate distance:")
-        for city in self.route:
-            print("[", city, cities[city].x, cities[city].y, "]")
+    def calculate_distance(self):
+        # print("Calculate distance:")
+        # for city in self.route:
+        #    print("[", city, cities[city].x, cities[city].y, "]")
+
         distance_sum = 0
 
         # calculate distance from the start point to the first step on the route
         delta = distance(cities[0], cities[self.route[0]])
         # add that distance to total distance traveled
         distance_sum += delta
-        print("d:[ S ] [", delta, "]")
+        # print("d:[ S ] [", delta, "]")
 
         for i in range(self.route.__len__() - 1):
             # calculate distance from each destination to the next
             delta = distance(cities[self.route[i]], cities[self.route[i+1]])
             # add up the distances
             distance_sum += delta
-            print("d:[", i, "to", i+1, "] [", delta, "]")
+            # print("d:[", i, "to", i+1, "] [", delta, "]")
 
         # calculate distance from the last step on the route to the end point
         delta = distance(cities[self.route[-1]], cities[0])
         # add that distance to total distance traveled
         distance_sum += delta
-        print("d:[ E ] [", delta, "]")
+        # print("d:[ E ] [", delta, "]")
 
-        print("SUM: [", distance_sum, "]")
+        print("DISTANCE SUM: [", distance_sum, "]")
+        self.distance = distance_sum
         return distance_sum
 
 
@@ -116,53 +108,52 @@ b = City(1, 0)
 
 print(distance(a, b))
 
-cities = list()
-import_data_2("berlin52_formatted.tsp", cities)
+import_data_2("berlin52_formatted.tsp")
 print("-----")
-individuals = Individual(52, initialize=True)
-individuals.print_route()
-individuals.calculate_distance(cities)
+population = Individual(initialize=True)
+population.print_route()
+population.calculate_distance()
 print("......")
 
-individual_a = Individual(52, initialize=True)
-individual_b = Individual(52, initialize=True)
+individual_a = Individual(initialize=True)
+individual_b = Individual(initialize=True)
 child = crossover(individual_a, individual_b)
 
-
-num_individuals = 100
+population_size = 100
 prob_mutate = 0.1
 
 # initialize
-individuals = list()
-for i in range(num_individuals):
-    individuals.append(Individual(len(cities), initialize=True))
+population = list()
+while population.__len__() < population_size:
+    population.append(Individual(initialize=True))
 
 while True:
     # Selection
-    best_distance = individuals[0].calculate_distance()
-    next_best_distance = individuals[1].calculate_distance()
+    best_distance = population[0].calculate_distance()
+    next_best_distance = population[1].calculate_distance()
     best_individuals = list()
-    best_individuals.append(individuals[0])
-    best_individuals.append(individuals[1])
+    best_individuals.append(population[0])
+    best_individuals.append(population[1])
 
     if next_best_distance < best_distance:
         best_distance, next_best_distance = next_best_distance, best_distance
         best_individuals[0], best_individuals[1] = best_individuals[1], best_individuals[0]
 
-    for individual in individuals:
-        this_distance = individual.calculate_distance(cities)
+    for individual in population:
+        this_distance = individual.calculate_distance()
 
         if this_distance < next_best_distance:
             if this_distance < best_distance:
                 # Replace best individual
-                best_individuals[0] = individual
-                best_distance = this_distance
+                best_individuals[0], best_individuals[1] = individual, best_individuals[0]
+                best_distance, next_best_distance = this_distance, best_distance
             else:
                 # Replace next best individual
                 best_individuals[1] = individual
                 next_best_distance = this_distance
 
-    for i in range(num_individuals-2):
+    for i in range(population_size - 2):
+        1
         # Crossover
         # Mutation
     # Replacement
