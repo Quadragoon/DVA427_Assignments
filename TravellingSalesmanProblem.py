@@ -58,12 +58,15 @@ class Individual:
 
 def crossover(parent_a, parent_b):
     print("crossover:")
-    route_a = parent_a.route.copy()
-    route_b = parent_b.route.copy()
+    #route_a = parent_a.route.copy()
+    #route_b = parent_b.route.copy()
+
+    route_a = [7,3,1,8,2,4,6,5]
+    route_b = [7,5,2,8,4,3,1,6]
     print(route_a)
     print(route_b)
 
-    crossover_length = 2
+    crossover_length = 3
     crossover_start = 2
 
     crossover_set = []
@@ -79,11 +82,13 @@ def crossover(parent_a, parent_b):
         route_c.append(difference_set[i])
     for element in crossover_set:
         route_c.append(element)
+    for i in range(crossover_start, len(difference_set)):
+        route_c.append(difference_set[i])
 
 
 
     print("a: ", route_a)
-    print("c: ", crossover)
+    print("c: ", route_c)
     print("b: ", route_b)
 
     return 1
