@@ -77,6 +77,16 @@ class Individual:
 
         self.route[pos1], self.route[pos2] = self.route[pos2], self.route[pos1]
 
+    def mutate_reversal(self):
+        length = (len(self.route))
+        mutation_length = random.randrange(1, length)
+        mutation_start = random.randrange(0, length - mutation_length)
+        mutation_end = mutation_start + mutation_length
+
+        mutated_section = self.route[mutation_start:mutation_end]
+        mutated_section.reverse()
+        self.route[mutation_start:mutation_end] = mutated_section
+
 
 def crossover(parent_a, parent_b):
     route_a = parent_a.route
@@ -103,9 +113,10 @@ def crossover(parent_a, parent_b):
 
 import_data_2("berlin52_formatted.tsp")
 
-population_size = 100
+population_size = 20
 prob_crossover = 1.0
-prob_mutation = 0.2
+prob_mutation = 0.5
+prob_mutation_reversal = 0.5
 
 # initialize
 population = list()
@@ -113,6 +124,7 @@ while population.__len__() < population_size:
     population.append(Individual(initialize=True))
 
 best_dist = 99999
+stagnation = 0
 
 while True:
     # Selection
@@ -125,6 +137,11 @@ while True:
     if population[0].distance < best_dist:
         best_dist = population[0].distance
         print(best_dist)
+        stagnation = 0
+    else:
+        stagnation += 1
+        if stagnation % 1000 == 0:
+            print(stagnation, "generations without improvement...")
 
     fitness_ratings = list()
     total_fitness = 0
@@ -140,7 +157,10 @@ while True:
     # Create children
     children = list()
     children.append(population[0])  # elitism
-    for i in range(1, population_size):
+    random_portion = floor(population_size/4)
+    for i in range(1, random_portion):
+        children.append(Individual(initialize=True))
+    for i in range(random_portion, population_size):
         parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
         # Crossover
         child = Individual()
@@ -148,6 +168,8 @@ while True:
         # Mutation
         if random.random() <= prob_mutation:
             child.mutate()
+        if random.random() <= prob_mutation_reversal:
+            child.mutate_reversal()
         children.append(child)
 
     # Replacement
