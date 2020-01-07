@@ -60,16 +60,14 @@ for data_point in data_points:
     first_node = data_point[0]
     second_node = data_point[1]
     distance = int(data_point[2])
+
     if first_node not in nodes.keys():
-        nodes[first_node] = Dijkstra_node()
-        nodes[first_node].add_neighbour(second_node, distance)
-    else:
-        nodes[first_node].add_neighbour(second_node, distance)
+        nodes[first_node] = Dijkstra_node()  # create new node and add it to the dictionary of nodes
+    nodes[first_node].add_neighbour(second_node, distance)
+
     if second_node not in nodes.keys():
-        nodes[second_node] = Dijkstra_node()
-        nodes[second_node].add_neighbour(first_node, distance)
-    else:
-        nodes[second_node].add_neighbour(first_node, distance)
+        nodes[second_node] = Dijkstra_node()  # create new node and add it to the dictionary of nodes
+    nodes[second_node].add_neighbour(first_node, distance)
 
 # Mark all nodes unvisited. Create a set of all the unvisited nodes called the unvisited set
 # Assign to every node a tentative distance value: set it to zero for our initial node and to infinity for all other
