@@ -1,5 +1,6 @@
 from math import *
 import random
+import lab_library as lablib
 
 
 def import_data(filename, cities):
@@ -15,14 +16,16 @@ def import_data(filename, cities):
         cities.append(city_to_import)
 
 
+def import_data_2(filename, cities):
+    imported_data = lablib.import_data_from_file(filename, 3, has_classification=False, sep=" ")
+    for data_point in imported_data:
+        x = data_point.attributes[1]
+        y = data_point.attributes[2]
+        cities.append(City(x, y))
+
+
 def distance(p1, p2):
     return sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
-
-
-class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
 
 
 class City:
@@ -94,13 +97,13 @@ def crossover(parent_a, parent_b):
     return 1
 
 
-a = Point(0, 0)
-b = Point(1, 0)
+a = City(0, 0)
+b = City(1, 0)
 
 print(distance(a, b))
 
 cities = list()
-import_data("berlin52_modified", cities)
+import_data_2("berlin52_formatted.tsp", cities)
 print("-----")
 individuals = Individual(52, initialize=True)
 individuals.print_route()
