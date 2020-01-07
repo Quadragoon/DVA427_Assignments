@@ -1,5 +1,6 @@
 from math import *
 import random
+import lab_library as lablib
 
 
 def import_data(filename, cities):
@@ -15,14 +16,16 @@ def import_data(filename, cities):
         cities.append(city_to_import)
 
 
+def import_data_2(filename, cities):
+    imported_data = lablib.import_data_from_file(filename, 3, has_classification=False, sep=" ")
+    for data_point in imported_data:
+        x = data_point.attributes[1]
+        y = data_point.attributes[2]
+        cities.append(City(x, y))
+
+
 def distance(p1, p2):
     return sqrt((p1.x-p2.x)**2+(p1.y-p2.y)**2)
-
-
-class Point:
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
 
 
 class City:
@@ -35,7 +38,7 @@ class Individual:
     def __init__(self, num_cities, initialize=False):
         self.route = []
         if initialize is True:
-            for i in range(num_cities):
+            for i in range(1, num_cities):
                 self.route.append(i)
             random.shuffle(self.route)
 
@@ -47,24 +50,29 @@ class Individual:
         print("Calculate distance:")
         for city in self.route:
             print("[", city, cities[city].x, cities[city].y, "]")
-        sum = 0
-        for i in range(52):
-            delta = distance(cities[self.route[i-1]], cities[self.route[i]])
-            sum += delta
-            print("d:[", i, "] [", delta, "]")
-        print("SUM: [", sum, "]")
-        return sum
+        distance_sum = 0
 
-    def mutate(self):
-        length = float(len(self.route))
-        pos1 = random.random()*length
-        pos2 = pos1
-        while pos2 == pos1:
-            pos2 = random.random()*length
+        # calculate distance from the start point to the first step on the route
+        delta = distance(cities[0], cities[self.route[0]])
+        # add that distance to total distance traveled
+        distance_sum += delta
+        print("d:[ S ] [", delta, "]")
 
-        # switch elements
-        self.route[pos1], self.route[pos2] = self.route[pos2], self.route[pos1]
+        for i in range(self.route.__len__() - 1):
+            # calculate distance from each destination to the next
+            delta = distance(cities[self.route[i]], cities[self.route[i+1]])
+            # add up the distances
+            distance_sum += delta
+            print("d:[", i, "to", i+1, "] [", delta, "]")
 
+        # calculate distance from the last step on the route to the end point
+        delta = distance(cities[self.route[-1]], cities[0])
+        # add that distance to total distance traveled
+        distance_sum += delta
+        print("d:[ E ] [", delta, "]")
+
+        print("SUM: [", distance_sum, "]")
+        return distance_sum
 
 
 def crossover(parent_a, parent_b):
@@ -96,15 +104,20 @@ def crossover(parent_a, parent_b):
     for i in range(crossover_start, len(difference_set)):
         route_c.append(difference_set[i])
 
-    return route_c
+    print("a: ", route_a)
+    print("c: ", route_c)
+    print("b: ", route_b)
 
-a = Point(0, 0)
-b = Point(1, 0)
+    return 1
+
+
+a = City(0, 0)
+b = City(1, 0)
 
 print(distance(a, b))
 
 cities = list()
-import_data("berlin52_modified", cities)
+import_data_2("berlin52_formatted.tsp", cities)
 print("-----")
 individuals = Individual(52, initialize=True)
 individuals.print_route()
@@ -114,7 +127,6 @@ print("......")
 individual_a = Individual(52, initialize=True)
 individual_b = Individual(52, initialize=True)
 child = crossover(individual_a, individual_b)
-print(".....", child)
 
 
 num_individuals = 100
@@ -162,6 +174,7 @@ while True:
 #    for i in range(cities.count()):
 #        individual.route[i]
 #    print(individual.route)
+
 
 
 # Create initial random population
