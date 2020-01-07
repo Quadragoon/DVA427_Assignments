@@ -13,6 +13,7 @@ class Node:
     def __init__(self, id):
         self.id = id
         self.distances = list()
+        self.neighbours = list()
 
         for i in range(num_nodes):
             if i == self.id:
@@ -21,17 +22,61 @@ class Node:
                 self.distances.append(infinity)
 
 
+class Dijkstra_node:
+    def __init__(self, init_neighbour, init_neighbour_distance):
+        self.distance = infinity
+        self.neighbours = {init_neighbour: init_neighbour_distance}
+        self.best_neighbour = "bonsly"
+
+
+# because we're not only importing numbers, we have to use a custom import function
+def import_data_from_file(filename):
+    data_file = open(filename, mode="r")
+
+    line = data_file.readline()
+    while line != "@data\n":
+        line = data_file.readline()
+
+    print("Found data start, processing...")
+
+    all_data = []
+
+    for line in data_file:
+        if not any(character.isdigit() for character in line):
+            continue
+        all_data.append(list(line.split(" ")))
+
+    data_count = len(all_data)
+    print("Total number of data points: " + data_count.__str__())
+    return all_data
+
+
+data_points = import_data_from_file("city 1.txt")
+nodes = dict()
+for data_point in data_points:
+    first_node = data_point[0]
+    second_node = data_point[1]
+    node_distance = int(data_point[2])
+    if first_node not in nodes.keys():
+        nodes[first_node] = Dijkstra_node(second_node, node_distance)
+    else:
+        nodes[first_node].neighbours[second_node] = node_distance
+    if second_node not in nodes.keys():
+        nodes[second_node] = Dijkstra_node(first_node, node_distance)
+    else:
+        nodes[second_node].neighbours[first_node] = node_distance
+
+for first_node in nodes:
+    for second_node in nodes[first_node].neighbours:
+        print(first_node, second_node, nodes[first_node].neighbours[second_node])
+
 # Mark all nodes unvisited. Create a set of all the unvisited nodes called the unvisited set
-unvisited_nodes = list()
 # Assign to every node a tentative distance value: set it to zero for our initial node and to infinity for all other
 # nodes. Set the initial node as current
-nodes = list()
-for i in range(num_nodes):
-    nodes.append(Node(id=i))
-    unvisited_nodes.append(i)
 
-
-current_node = 0
+current_node = "F"
+nodes[current_node].distance = 0
+unvisited_nodes = nodes.copy()
 
 while True:
     # For the current node, consider all of its unvisited neighbours and calculate their tentative distances through the
@@ -40,16 +85,24 @@ while True:
     # neighbour B has length 2, then the distance to B through A will be 6 + 2 = 8. If B was previously marked with a
     # distance greater than 8 then change it to 8. Otherwise, the current value will be kept
 
-    # neighbors = [x for x in node.distances if x < infinity]
-    neighbors = [x for x in nodes if x.distances < infinity]
-
-    for neighbor in neighbors:
-        nodeDistance = nodes[current_node].distances[current_node] + neighbor.distances[current_node]
-        if nodeDistance < neighbor.distances[current_node]
-            neighbor.distances = nodeDistance
+    for neighbour in nodes[current_node].neighbours:
+        if neighbour in unvisited_nodes.keys():
+            nodeDistance = nodes[current_node].distance + nodes[current_node].neighbours[neighbour]
+            if nodeDistance < nodes[neighbour].distance:
+                nodes[neighbour].distance = nodeDistance
+                nodes[neighbour].best_neighbour = current_node
     # When we are done considering all of the unvisited neighbours of the current node, mark the current node as visited and
     # remove it from the unvisited set. A visited node will never be checked again.
     unvisited_nodes.pop(current_node)
+    if len(unvisited_nodes) == 0:
+        break
+
+    # this isn't elegant (by python standards) but it works
+    lowest_tent_dist = infinity
+    for possible_next_node in unvisited_nodes:
+        if unvisited_nodes[possible_next_node].distance < lowest_tent_dist:
+            lowest_tent_dist = unvisited_nodes[possible_next_node].distance
+            current_node = possible_next_node
 
     # If the smallest tentative distance among the nodes in the unvisited set is infinity (when planning a complete
     # traversal; occurs when there is no connection between the initial node and remaining unvisited nodes), then stop.
@@ -58,4 +111,11 @@ while True:
     # Otherwise, select the unvisited node that is marked with the smallest tentative distance, set it as the new "current
     # node", and go back to step 3.
 
-
+for node in nodes:
+    location = node
+    print(location, "->", nodes[location].best_neighbour, end="")
+    location = nodes[location].best_neighbour
+    while location != "F":
+        print("->", nodes[location].best_neighbour, end="")
+        location = nodes[location].best_neighbour
+    print("")
