@@ -70,10 +70,10 @@ class Individual:
 
     def mutate(self):
         length = (len(self.route))
-        pos1 = round(random.random() * length)
+        pos1 = random.randrange(0, length)
         pos2 = pos1
         while pos2 == pos1:
-            pos2 = round(random.random() * length)
+            pos2 = random.randrange(0, length)
 
         self.route[pos1] = self.route[pos2]
 
@@ -83,7 +83,7 @@ def crossover(parent_a, parent_b):
     route_b = parent_b.route
 
     crossover_length = random.randrange(5, 10)
-    crossover_start_index = random.randrange(stop=route_a.__len__() - crossover_length)
+    crossover_start_index = random.randrange(0, route_a.__len__() - crossover_length)
     crossover_end_index = crossover_start_index + crossover_length
 
     crossover_set = route_a[crossover_start_index:crossover_end_index]
@@ -114,6 +114,7 @@ while population.__len__() < population_size:
 
 while True:
     # Selection
+    # Sort based on distance
     for individual in population:
         individual.calculate_distance()
     key_function = operator.attrgetter("distance")
@@ -130,14 +131,16 @@ while True:
         weighted_probability = fitness / total_fitness
         probability_distribution.append(weighted_probability)
 
-    parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
-
+    # Create children
+    children = list()
+    for i in range(population_size):
+        parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
         # Crossover
-
+        child = Individual()
+        child.route = crossover(parents[0], parents[1])
         # Mutation
-    for individual in population:
         if random.random() <= prob_mutation:
-            individual.mutate()
+            child.mutate()
 
     # population.sort(key=lambda x: x.calculate_distance())
 
