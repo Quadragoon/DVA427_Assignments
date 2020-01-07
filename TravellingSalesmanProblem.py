@@ -55,6 +55,17 @@ class Individual:
         print("SUM: [", sum, "]")
         return sum
 
+    def mutate(self):
+        length = float(len(self.route))
+        pos1 = random.random()*length
+        pos2 = index_a
+        while pos2 == pos1:
+            pos2 = random.random()*length
+
+        # switch elements
+        self.route[pos1], self.route[pos2] = self.route[pos2], self.route[pos1]
+
+
 
 def crossover(parent_a, parent_b):
     print("crossover:")
@@ -85,14 +96,7 @@ def crossover(parent_a, parent_b):
     for i in range(crossover_start, len(difference_set)):
         route_c.append(difference_set[i])
 
-
-
-    print("a: ", route_a)
-    print("c: ", route_c)
-    print("b: ", route_b)
-
-    return 1
-
+    return route_c
 
 a = Point(0, 0)
 b = Point(1, 0)
@@ -110,13 +114,13 @@ print("......")
 individual_a = Individual(52, initialize=True)
 individual_b = Individual(52, initialize=True)
 child = crossover(individual_a, individual_b)
+print(".....", child)
 
 
-#for individual in individuals:
+# for individual in individuals:
 #    for i in range(cities.count()):
 #        individual.route[i]
 #    print(individual.route)
-
 
 
 # Create initial random population
