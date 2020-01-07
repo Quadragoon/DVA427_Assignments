@@ -66,14 +66,23 @@ class Individual:
         self.distance = distance_sum
         return distance_sum
 
+    def mutate(self):
+        length = (len(self.route))
+        pos1 = round(random.random() * length)
+        pos2 = pos1
+        while pos2 == pos1:
+            pos2 = round(random.random() * length)
+
+        self.route[pos1] = self.route[pos2]
+
 
 def crossover(parent_a, parent_b):
     print("crossover:")
-    #route_a = parent_a.route.copy()
-    #route_b = parent_b.route.copy()
+    # route_a = parent_a.route.copy()
+    # route_b = parent_b.route.copy()
 
-    route_a = [7,3,1,8,2,4,6,5]
-    route_b = [7,5,2,8,4,3,1,6]
+    route_a = [7, 3, 1, 8, 2, 4, 6, 5]
+    route_b = [7, 5, 2, 8, 4, 3, 1, 6]
     print(route_a)
     print(route_b)
 
@@ -119,8 +128,12 @@ individual_a = Individual(initialize=True)
 individual_b = Individual(initialize=True)
 child = crossover(individual_a, individual_b)
 
+
+num_individuals = 100
+prob_crossover = 0.8
+
 population_size = 100
-prob_mutate = 0.1
+prob_mutation = 0.1
 
 # initialize
 population = list()
@@ -152,21 +165,21 @@ while True:
                 best_individuals[1] = individual
                 next_best_distance = this_distance
 
-    for i in range(population_size - 2):
-        1
         # Crossover
+
         # Mutation
+    for individual in population:
+        if random.random() >= prob_mutation:
+            individual.mutate()
+
+    # population.sort(key=lambda x: x.calculate_distance())
+
     # Replacement
-
-
-
 
 # for individual in individuals:
 #    for i in range(cities.count()):
 #        individual.route[i]
 #    print(individual.route)
-
-
 
 # Create initial random population
 # While termination criteria is not satisfied:
@@ -178,4 +191,3 @@ while True:
 #   Recombine parents to generate a set of offspring
 #   Mutate offspring
 #   Replace population by the set of new offspring
-
