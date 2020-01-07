@@ -117,6 +117,47 @@ child = crossover(individual_a, individual_b)
 print(".....", child)
 
 
+num_individuals = 100
+prob_mutate = 0.1
+
+# initialize
+individuals = list()
+for i in range(num_individuals):
+    individuals.append(Individual(len(cities), initialize=True))
+
+while True:
+    # Selection
+    best_distance = individuals[0].calculate_distance()
+    next_best_distance = individuals[1].calculate_distance()
+    best_individuals = list()
+    best_individuals.append(individuals[0])
+    best_individuals.append(individuals[1])
+
+    if next_best_distance < best_distance:
+        best_distance, next_best_distance = next_best_distance, best_distance
+        best_individuals[0], best_individuals[1] = best_individuals[1], best_individuals[0]
+
+    for individual in individuals:
+        this_distance = individual.calculate_distance(cities)
+
+        if this_distance < next_best_distance:
+            if this_distance < best_distance:
+                # Replace best individual
+                best_individuals[0] = individual
+                best_distance = this_distance
+            else:
+                # Replace next best individual
+                best_individuals[1] = individual
+                next_best_distance = this_distance
+
+    for i in range(num_individuals-2):
+        # Crossover
+        # Mutation
+    # Replacement
+
+
+
+
 # for individual in individuals:
 #    for i in range(cities.count()):
 #        individual.route[i]
