@@ -79,63 +79,33 @@ class Individual:
 
 
 def crossover(parent_a, parent_b):
-    print("crossover:")
-    # route_a = parent_a.route.copy()
-    # route_b = parent_b.route.copy()
+    route_a = parent_a.route
+    route_b = parent_b.route
 
-    route_a = [7, 3, 1, 8, 2, 4, 6, 5]
-    route_b = [7, 5, 2, 8, 4, 3, 1, 6]
-    print(route_a)
-    print(route_b)
+    crossover_length = random.randrange(5, 10)
+    crossover_start_index = random.randrange(stop=route_a.__len__() - crossover_length)
+    crossover_end_index = crossover_start_index + crossover_length
 
-    crossover_length = 3
-    crossover_start = 2
+    crossover_set = route_a[crossover_start_index:crossover_end_index]
 
-    crossover_set = []
-    for i in range(crossover_length):
-        crossover_set.append(route_a[crossover_start+i])
-
-    difference_set = route_b.copy()
-    for element in crossover_set:
-        difference_set.remove(element)
+    difference_set = [x for x in route_b if x not in crossover_set]
 
     route_c = []
-    for i in range(crossover_start):
+    for i in range(crossover_start_index):
         route_c.append(difference_set[i])
     for element in crossover_set:
         route_c.append(element)
-    for i in range(crossover_start, len(difference_set)):
+    for i in range(crossover_start_index, len(difference_set)):
         route_c.append(difference_set[i])
 
-    print("a: ", route_a)
-    print("c: ", route_c)
-    print("b: ", route_b)
+    return route_c
 
-    return 1
-
-
-a = City(0, 0)
-b = City(1, 0)
-
-print(distance(a, b))
 
 import_data_2("berlin52_formatted.tsp")
-print("-----")
-population = Individual(initialize=True)
-population.print_route()
-population.calculate_distance()
-print("......")
-
-individual_a = Individual(initialize=True)
-individual_b = Individual(initialize=True)
-child = crossover(individual_a, individual_b)
-
-
-num_individuals = 100
-prob_crossover = 0.8
 
 population_size = 100
-prob_mutation = 0.1
+prob_crossover = 1.0
+prob_mutation = 0.2
 
 # initialize
 population = list()
@@ -166,7 +136,7 @@ while True:
 
         # Mutation
     for individual in population:
-        if random.random() >= prob_mutation:
+        if random.random() <= prob_mutation:
             individual.mutate()
 
     # population.sort(key=lambda x: x.calculate_distance())
