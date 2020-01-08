@@ -4,15 +4,8 @@ import lab_library as lablib
 import operator
 import numpy as np
 
+
 cities = list()
-
-
-def import_data_2(filename):
-    imported_data = lablib.import_data_from_file(filename, 3, has_classification=False, sep=" ")
-    for data_point in imported_data:
-        x = data_point.attributes[1]
-        y = data_point.attributes[2]
-        cities.append(City(x, y))
 
 
 def distance(p1, p2):
@@ -39,32 +32,24 @@ class Individual:
         return
 
     def calculate_distance(self):
-        # print("Calculate distance:")
-        # for city in self.route:
-        #    print("[", city, cities[city].x, cities[city].y, "]")
-
         distance_sum = 0
 
         # calculate distance from the start point to the first step on the route
         delta = distance(cities[0], cities[self.route[0]])
         # add that distance to total distance traveled
         distance_sum += delta
-        # print("d:[ S ] [", delta, "]")
 
         for i in range(self.route.__len__() - 1):
             # calculate distance from each destination to the next
             delta = distance(cities[self.route[i]], cities[self.route[i+1]])
             # add up the distances
             distance_sum += delta
-            # print("d:[", i, "to", i+1, "] [", delta, "]")
 
         # calculate distance from the last step on the route to the end point
         delta = distance(cities[self.route[-1]], cities[0])
         # add that distance to total distance traveled
         distance_sum += delta
-        # print("d:[ E ] [", delta, "]")
 
-        # print("DISTANCE SUM: [", distance_sum, "]")
         self.distance = distance_sum
         return distance_sum
 
@@ -88,30 +73,40 @@ class Individual:
         self.route[mutation_start:mutation_end] = mutated_section
 
 
-def crossover(parent_a, parent_b):
+def create_crossover_route(parent_a, parent_b):
     route_a = parent_a.route
     route_b = parent_b.route
 
+    # decide which parts of the genetic material to copy over from parent A
     crossover_length = random.randrange(2, 15)
     crossover_start_index = random.randrange(0, len(route_a) - crossover_length)
     crossover_end_index = crossover_start_index + crossover_length
 
+    # create the set of route information to be crossed over from A
     crossover_set = route_a[crossover_start_index:crossover_end_index]
 
+    # create the set that contains every route stop that isn't in the crossover set, and take this from parent B
     difference_set = [x for x in route_b if x not in crossover_set]
 
     route_c = []
+    # copy from difference set until we reach the start index of crossover
     for i in range(crossover_start_index):
         route_c.append(difference_set[i])
+    # then copy the entire crossover set
     for element in crossover_set:
         route_c.append(element)
+    # then resume copying from the difference set
     for i in range(crossover_start_index, len(difference_set)):
         route_c.append(difference_set[i])
 
     return route_c
 
 
-import_data_2("berlin52_formatted.tsp")
+imported_data = lablib.import_data_from_file("berlin52_formatted.tsp", 3, has_classification=False, sep=" ")
+for data_point in imported_data:
+    x = data_point.attributes[1]
+    y = data_point.attributes[2]
+    cities.append(City(x, y))
 
 population_size = 20
 prob_crossover = 1.0
@@ -146,6 +141,7 @@ while True:
     fitness_ratings = list()
     total_fitness = 0
     for individual in population:
+        # fitness ratings are based on distance compared to the worst distance in the population, scaled by a power of 5
         fitness_ratings.append((individual.distance - population[-1].distance) ** 5)
         total_fitness += fitness_ratings[-1]
 
@@ -157,14 +153,18 @@ while True:
     # Create children
     children = list()
     children.append(population[0])  # elitism
+
+    # one quarter of the population will be entirely new, random individuals
     random_portion = floor(population_size/4)
     for i in range(1, random_portion):
         children.append(Individual(initialize=True))
+
+    # fill in the remaining three-quarters of the population with children of parents selected by fitness
     for i in range(random_portion, population_size):
         parents = np.random.choice(population, 2, p=probability_distribution, replace=False)
         # Crossover
         child = Individual()
-        child.route = crossover(parents[0], parents[1])
+        child.route = create_crossover_route(parents[0], parents[1])
         # Mutation
         if random.random() <= prob_mutation:
             child.mutate()
