@@ -120,8 +120,9 @@ while population.__len__() < population_size:
 
 best_dist = 99999
 stagnation = 0
+infinity = 10000000000
 
-while True:
+while stagnation <= infinity:
     # Selection
     # Sort based on distance
     for individual in population:
@@ -129,6 +130,7 @@ while True:
     key_function = operator.attrgetter("distance")
     population.sort(key=key_function, reverse=False)
 
+    # Find individual with shortest route
     if population[0].distance < best_dist:
         best_dist = population[0].distance
         print(best_dist)
@@ -136,7 +138,7 @@ while True:
     else:
         stagnation += 1
         if stagnation % 1000 == 0:
-            print(stagnation, "generations without improvement...")
+        print(stagnation, "generations without improvement...")
 
     fitness_ratings = list()
     total_fitness = 0
@@ -145,7 +147,7 @@ while True:
         fitness_ratings.append((individual.distance - population[-1].distance) ** 5)
         total_fitness += fitness_ratings[-1]
 
-    probability_distribution = list()
+    probability_distribution = list()  # Create custom probability function
     for fitness in fitness_ratings:
         weighted_probability = fitness / total_fitness
         probability_distribution.append(weighted_probability)
