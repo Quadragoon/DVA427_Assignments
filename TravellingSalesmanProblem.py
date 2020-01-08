@@ -138,7 +138,7 @@ while stagnation <= infinity:
     else:
         stagnation += 1
         if stagnation % 1000 == 0:
-        print(stagnation, "generations without improvement...")
+            print(stagnation, "generations without improvement...")
 
     fitness_ratings = list()
     total_fitness = 0

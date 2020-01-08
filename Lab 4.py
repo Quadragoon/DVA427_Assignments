@@ -93,9 +93,17 @@ while len(unvisited_nodes) > 0:
 
 # print out each node's shortest path to the target by printing the best neighbour until we're there
 for node_id in nodes:
-    if nodes[node_id].distance_to_target == 0:  # trying to find a path from the target to the target will get weird...
+    if node_id == target_id:  # trying to find a path from the target to the target will get weird...
         continue  # ... so we won't try doing that
+
+    # print distance to target
+    print(node_id, ":", nodes[node_id].distance_to_target, end="   ")
+    if nodes[node_id].distance_to_target < 10:
+        print(" ", end="")  # extra spacing for nicer-looking printout :)
+
+    # print path from node to its neighbour with the shortest path to the target
     print(node_id, "->", nodes[node_id].best_neighbour, end="")
+    # keep printing path until we reach the target
     location = nodes[nodes[node_id].best_neighbour]
     while location != nodes[target_id]:
         print(" ->", location.best_neighbour, end="")
